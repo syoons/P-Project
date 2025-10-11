@@ -1,6 +1,5 @@
-package com.example.demo.entity;
+package com.p_project.user;
 
-import com.example.demo.dto.UserDTO;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;

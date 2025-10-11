@@ -1,4 +1,4 @@
-package com.example.demo.dto;
+package com.p_project.oauth2;
 
 public interface OAuth2Response {
 

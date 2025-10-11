@@ -1,9 +1,9 @@
-package com.example.demo.config;
+package com.p_project.config;
 
-import com.example.demo.jwt.JWTFilter;
-import com.example.demo.jwt.JWTUtil;
-import com.example.demo.oauth2.CustomSuccessHandler;
-import com.example.demo.service.CustomOAuth2UserService;
+import com.p_project.jwt.JWTFilter;
+import com.p_project.jwt.JWTUtil;
+import com.p_project.oauth2.CustomSuccessHandler;
+import com.p_project.sociaLogin.CustomOAuth2UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

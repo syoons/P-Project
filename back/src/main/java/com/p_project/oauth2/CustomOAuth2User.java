@@ -1,6 +1,6 @@
-package com.example.demo.oauth2;
+package com.p_project.oauth2;
 
-import com.example.demo.dto.UserDTO;
+import com.p_project.user.UserDTO;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 
@@ -15,6 +15,10 @@ public class CustomOAuth2User implements OAuth2User {
     public CustomOAuth2User(UserDTO userDTO) {
 
         this.userDTO = userDTO;
+    }
+
+    public CustomOAuth2User(com.p_project.user.UserDTO userDTO, UserDTO userDTO1) {
+        this.userDTO = userDTO1;
     }
 
     @Override

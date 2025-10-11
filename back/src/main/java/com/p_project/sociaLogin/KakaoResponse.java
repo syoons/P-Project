@@ -1,4 +1,6 @@
-package com.example.demo.dto;
+package com.p_project.sociaLogin;
+
+import com.p_project.oauth2.OAuth2Response;
 
 import java.util.Map;
 

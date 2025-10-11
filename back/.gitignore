@@ -15,6 +15,10 @@ bin/
 .vscode/
 *.class
 
+# Gradle
+.gradle/
+build/
+
 # --- STS 관련 ---
 .apt_generated/
 .factorypath
@@ -23,13 +27,6 @@ bin/
 .settings/
 .springBeans/
 .sts4-cache/
-
-# --- NetBeans (잘 안 쓰면 지워도 무방) ---
-nbproject/private/
-nbbuild/
-dist/
-nbdist/
-.nb-gradle/
 
 # --- 로그 파일 ---
 *.log

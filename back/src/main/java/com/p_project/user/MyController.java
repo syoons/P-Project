@@ -1,4 +1,4 @@
-package com.example.demo.controller;
+package com.p_project.user;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ResponseBody;

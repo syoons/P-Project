@@ -1,23 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="GradleMigrationSettings" migrationVersion="1" />
   <component name="GradleSettings">
     <option name="linkedExternalProjectsSettings">
       <GradleProjectSettings>
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
-        <option name="gradleHome" value="$PROJECT_DIR$/../../../../Project_src/gradle-9.1.0" />
-        <option name="gradleJvm" value="ms-17" />
+        <option name="gradleJvm" value="#GRADLE_JAVA_HOME" />
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/ai" />
             <option value="$PROJECT_DIR$/back" />
+            <option value="$PROJECT_DIR$/front" />
           </set>
         </option>
-      </GradleProjectSettings>
-      <GradleProjectSettings>
-        <option name="externalProjectPath" value="$PROJECT_DIR$/Back" />
-        <option name="gradleHome" value="$PROJECT_DIR$/../../../../Project_src/gradle-9.1.0" />
-        <option name="gradleJvm" value="ms-17" />
       </GradleProjectSettings>
     </option>
   </component>

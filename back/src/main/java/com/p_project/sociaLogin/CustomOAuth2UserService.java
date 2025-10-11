@@ -1,9 +1,9 @@
-package com.example.demo.service;
+package com.p_project.sociaLogin;
 
-import com.example.demo.dto.*;
-import com.example.demo.entity.UserEntity;
-import com.example.demo.oauth2.CustomOAuth2User;
-import com.example.demo.repository.UserRepository;
+import com.p_project.oauth2.CustomOAuth2User;
+import com.p_project.oauth2.OAuth2Response;
+import com.p_project.user.UserEntity;
+import com.p_project.user.UserRepository;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -27,8 +27,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
 
         OAuth2User oAuth2User = super.loadUser(userRequest);
-        // 디버깅용
-        System.out.println(oAuth2User);
+
+        System.out.println("\nCustomOAuth2UserService.class : " + oAuth2User + "\n");
 
         String registrationId = userRequest.getClientRegistration().getRegistrationId(); // "kakao"|"google"|"naver"
         OAuth2Response oAuth2Response;
@@ -104,7 +104,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         userRepository.save(user);
 
         // Security 컨텍스트에 넣을 최소 정보
-        UserDTO userDTO = new UserDTO();
+        com.p_project.user.UserDTO userDTO = new com.p_project.user.UserDTO();
         userDTO.setNickname(user.getNickname());
         userDTO.setName(user.getName());
         userDTO.setRole(user.getRole());

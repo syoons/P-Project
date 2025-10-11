@@ -1,6 +1,5 @@
-package com.example.demo.dto;
+package com.p_project.user;
 
-import com.example.demo.entity.UserEntity;
 import lombok.*;
 
 import java.time.LocalDateTime;

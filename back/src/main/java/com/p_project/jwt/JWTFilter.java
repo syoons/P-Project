@@ -1,8 +1,8 @@
-package com.example.demo.jwt;
+package com.p_project.jwt;
 
 import java.io.IOException;
-import com.example.demo.dto.UserDTO;
-import com.example.demo.oauth2.CustomOAuth2User;
+import com.p_project.oauth2.CustomOAuth2User;
+import com.p_project.user.UserDTO;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;

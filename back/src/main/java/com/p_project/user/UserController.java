@@ -1,11 +1,8 @@
-package com.example.demo.controller;
+package com.p_project.user;
 
 
-import com.example.demo.dto.UserDTO;
-import com.example.demo.entity.UserEntity;
-import com.example.demo.jwt.JWTUtil;
-import com.example.demo.repository.UserRepository;
-import com.example.demo.service.UserService;
+
+import com.p_project.jwt.JWTUtil;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;

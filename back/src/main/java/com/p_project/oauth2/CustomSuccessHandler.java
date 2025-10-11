@@ -1,6 +1,6 @@
-package com.example.demo.oauth2;
+package com.p_project.oauth2;
 
-import com.example.demo.jwt.JWTUtil;
+import com.p_project.jwt.JWTUtil;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
