@@ -1,38 +1,58 @@
+// src/main/java/com/example/demo/dto/UserDTO.java
 package com.example.demo.dto;
 
 import com.example.demo.entity.UserEntity;
-import jakarta.persistence.Column;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @ToString
 public class UserDTO {
 
+    private Integer id;
+
     private String name;
+
+    /** 'M' / 'F' / 'U' 등 1글자 권장 */
     private String gender;
+
     private String nickname;
+
+    // ===== OAuth / 프로필 =====
+    private String provider;        // GOOGLE / NAVER / KAKAO
+    private String providerUserId;  // sub / id
+    private String email;           // 있을 때만
+    private String profileImage;    // 있을 때만
+
+    @Builder.Default
+    private String role = "USER";
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime deletedAt;
 
-    //Getter, Setter, 생성자, toString 은 Lombok 어노테이션으로 생략가능
-
-    public static UserDTO toUserDTO(UserEntity userEntity){
-        UserDTO userDTO = new UserDTO();
-        userDTO.setName(userEntity.getName());
-        userDTO.setGender(userEntity.getGender());
-        userDTO.setNickname(userEntity.getNickname());
-        userDTO.setCreatedAt(userEntity.getCreatedAt());
-        userDTO.setUpdatedAt(userEntity.getUpdatedAt());
-        userDTO.setDeletedAt(userDTO.getDeletedAt());
-
-        return userDTO;
+    public static UserDTO toUserDTO(UserEntity e){
+        if (e == null) return null;
+        return UserDTO.builder()
+                .id(e.getId())
+                .name(e.getName())
+                .gender(e.getGender())
+                .nickname(e.getNickname())
+                .provider(e.getProvider())
+                .providerUserId(e.getProviderUserId())
+                .email(e.getEmail())
+                .profileImage(e.getProfileImage())
+                .role(e.getRole())
+                .createdAt(e.getCreatedAt())
+                .updatedAt(e.getUpdatedAt())
+                .deletedAt(e.getDeletedAt())
+                .build();
     }
+
+
 }

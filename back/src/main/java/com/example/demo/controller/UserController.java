@@ -3,11 +3,23 @@ package com.example.demo.controller;
 
 import com.example.demo.dto.UserDTO;
 import com.example.demo.entity.UserEntity;
+import com.example.demo.jwt.JWTUtil;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.service.UserService;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+
 
 @RestController
 @RequiredArgsConstructor
@@ -16,10 +28,13 @@ public class UserController {
 
     private final UserRepository repo;
     private final UserService userService;
+    private final JWTUtil jWTUtil;
+    private final AuthenticationManager authenticationManager;
 
 
-    @GetMapping
+    @GetMapping("/list")
     public List<UserEntity> list() {
+        System.out.println("UserController list");
         return repo.findAll();
     }
 
@@ -54,8 +69,68 @@ public class UserController {
         return repo.save(u);
     }
 
-    @DeleteMapping("/{id}")
-    public void delete(@PathVariable Integer id) {
-        repo.deleteById(id);
+    @GetMapping("/logout")
+    public String logout(HttpServletResponse response) {
+
+        System.out.println("UserController.logout");
+
+        // SecurityContext 초기화
+        SecurityContextHolder.clearContext();
+
+        // Access Token 쿠키 삭제
+        Cookie accessCookie = new Cookie("Authorization", null);
+        accessCookie.setMaxAge(0);
+        accessCookie.setPath("/");
+        response.addCookie(accessCookie);
+
+        // Refresh Token 쿠키 삭제
+        Cookie refreshCookie = new Cookie("RefreshToken", null);
+        refreshCookie.setMaxAge(0);
+        refreshCookie.setPath("/");
+        response.addCookie(refreshCookie);
+
+        return "로그아웃되었습니다.";
     }
+
+    
+    //일반회원 로그인시
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestParam String username,
+                                   @RequestParam String password,
+                                   HttpServletResponse response) {
+
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(username, password)
+            );
+
+            String role = authentication.getAuthorities().iterator().next().getAuthority();
+
+            String accessToken = jWTUtil.createJwt(username, role, 1000L * 60 * 60);
+
+            String refreshToken = jWTUtil.createJwt(username, role, 1000L * 60 * 60 * 24 * 14);
+
+            // 쿠키에 저장
+            Cookie accessCookie = new Cookie("Authorization", "Bearer " + accessToken);
+            accessCookie.setHttpOnly(true);
+            accessCookie.setPath("/");
+            accessCookie.setMaxAge(60 * 60); // 1시간
+
+            Cookie refreshCookie = new Cookie("RefreshToken", refreshToken);
+            refreshCookie.setHttpOnly(true);
+            refreshCookie.setPath("/");
+            refreshCookie.setMaxAge(60 * 60 * 24 * 14); // 14일
+
+            response.addCookie(accessCookie);
+            response.addCookie(refreshCookie);
+
+            return ResponseEntity.ok("로그인 성공");
+
+        } catch (BadCredentialsException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("아이디 또는 비밀번호가 올바르지 않습니다.");
+        } catch (AuthenticationException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("인증 실패");
+        }
+    }
+
 }

@@ -1,0 +1,46 @@
+# --- 기본 빌드/캐시 폴더 ---
+/.gradle/
+build/
+out/
+bin/
+
+# --- Gradle Wrapper는 포함해야 함 ---
+!gradle/wrapper/gradle-wrapper.jar
+
+# --- IDE 설정 파일 무시 (IntelliJ, STS, VSCode 등) ---
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+*.class
+
+# --- STS 관련 ---
+.apt_generated/
+.factorypath
+.project
+.classpath
+.settings/
+.springBeans/
+.sts4-cache/
+
+# --- NetBeans (잘 안 쓰면 지워도 무방) ---
+nbproject/private/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+# --- 로그 파일 ---
+*.log
+
+# --- 실행 환경 파일 (DB, API키 등) ---
+.env
+application-*.yml
+application-*.properties
+
+# --- 테스트 관련 빌드 폴더 제외 ---
+!**/src/main/**/out/
+!**/src/test/**/out/
+!**/src/main/**/bin/
+!**/src/test/**/bin/

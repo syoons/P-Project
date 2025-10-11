@@ -1,35 +1,40 @@
+// com/example/demo/entity/UserEntity.java
 package com.example.demo.entity;
-
 
 import com.example.demo.dto.UserDTO;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-
 import java.time.LocalDateTime;
 
 @Entity
 @Getter
 @Setter
-@Table(name = "`user`") // ← 중요: user는 예약어 이슈 피하려고 백틱 사용
+@Builder
+@NoArgsConstructor  // ✅ 매개변수 없는 생성자
+@AllArgsConstructor // ✅ 모든 필드를 받는 생성자
+@Table(name = "`user`") // user 예약어 회피
 public class UserEntity {
 
-
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     @Column(nullable = false, length = 45)
     private String name;
 
     @Column(nullable = false, length = 1)
-    private String gender; // 'M'/'F' 등
+    private String gender; // 'M'/'F' 등. 모르면 'U' 같은 기본값
 
-    @Column(nullable = false, length = 45)
+    @Column(nullable = false, length = 200)
     private String nickname;
+
+    // ====== OAuth 추가 필드 ======
+    @Column(length = 20)    private String provider;        // GOOGLE/NAVER/KAKAO
+    @Column(length = 80)    private String providerUserId;  // sub/id
+    @Column(length = 120)   private String email;           // 있을 때만 세팅
+    @Column(length = 200)   private String profileImage;    // 있을 때만 세팅
+    @Column(length = 20)    private String role = "USER";   // 권한(간단히 문자열)
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -39,21 +44,24 @@ public class UserEntity {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
-    public static UserEntity toUserEntity(UserDTO userDTO){
-        UserEntity UserEntity = new UserEntity();
-        UserEntity.setName(userDTO.getName());
-        UserEntity.setGender(userDTO.getGender());
-        UserEntity.setNickname(userDTO.getNickname());
-        UserEntity.setCreatedAt(userDTO.getCreatedAt());
-        UserEntity.setUpdatedAt(userDTO.getUpdatedAt());
-        UserEntity.setDeletedAt(userDTO.getDeletedAt());
-
-        return UserEntity;
+    public static UserEntity toUserEntity(UserDTO dto) {
+        if (dto == null) return null;
+        return UserEntity.builder()
+                .id(dto.getId())
+                .name(dto.getName())
+                .gender(dto.getGender())
+                .nickname(dto.getNickname())
+                .provider(dto.getProvider())
+                .providerUserId(dto.getProviderUserId())
+                .email(dto.getEmail())
+                .profileImage(dto.getProfileImage())
+                .role(dto.getRole())
+                .createdAt(dto.getCreatedAt())
+                .updatedAt(dto.getUpdatedAt())
+                .deletedAt(dto.getDeletedAt())
+                .build();
     }
-
-
 }
