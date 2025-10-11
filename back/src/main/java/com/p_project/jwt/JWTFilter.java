@@ -43,7 +43,6 @@ public class JWTFilter extends OncePerRequestFilter {
         }
 
         try {
-            // Access Token 만료 확인
             if (jwtUtil.isExpired(accessToken)) {
                 // Access Token 만료 시 Refresh Token 확인
                 handleExpiredAccessToken(request, response, filterChain);
@@ -61,7 +60,7 @@ public class JWTFilter extends OncePerRequestFilter {
         }
     }
 
-    // ===========================================================
+    // ===========================================================제발 좀 되라
 
     private void handleExpiredAccessToken(HttpServletRequest request,
                                           HttpServletResponse response,
@@ -88,7 +87,7 @@ public class JWTFilter extends OncePerRequestFilter {
             // 새 Access Token 생성 (예: 1시간)
             String newAccessToken = jwtUtil.createJwt(username, role, 1000L * 60 * 60);
 
-            // Bearer 없이 순수 토큰만 쿠키에 저장
+            // Bearer 없이 순수 토큰만 쿠키에 저장 -> 쿠키에 저장할때 띄어쓰기있으면 http에러나기 때문
             Cookie newAccessCookie = new Cookie("Authorization", newAccessToken);
             newAccessCookie.setHttpOnly(true);
             newAccessCookie.setPath("/");

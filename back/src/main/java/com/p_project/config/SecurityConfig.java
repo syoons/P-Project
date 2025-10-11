@@ -30,6 +30,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
 
+        System.out.println("\nSecurityFilterChain\n");
 
         //CSRF 비활성화함
         http.csrf(csrf -> csrf.disable());

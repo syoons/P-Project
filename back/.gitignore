@@ -15,10 +15,6 @@ bin/
 .vscode/
 *.class
 
-# Gradle
-.gradle/
-build/
-
 # --- STS 관련 ---
 .apt_generated/
 .factorypath

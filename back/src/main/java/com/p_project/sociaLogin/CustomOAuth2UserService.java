@@ -68,7 +68,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             else if ("female".equalsIgnoreCase(kakaoGender)) gender = "F";
             else gender = "U";
         }
-        // (Google/Naver도 성별 파싱 메서드 있다면 동일하게 매핑)
 
         // 조회 기준 변경: name이 아니라 provider+providerUserId
         Optional<UserEntity> opt = userRepository.findByProviderAndProviderUserId(provider, providerUserId);
