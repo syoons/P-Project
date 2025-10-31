@@ -29,8 +29,10 @@ bin/
 
 # --- 실행 환경 파일 (DB, API키 등) ---
 .env
-application-*.yml
-application-*.properties
+#application-*.yml
+#application-*.properties3
+#.env 파일에서 전부 관리해서 이그노어x
+
 
 # --- 테스트 관련 빌드 폴더 제외 ---
 !**/src/main/**/out/
