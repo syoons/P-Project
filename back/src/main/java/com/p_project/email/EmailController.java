@@ -1,8 +1,5 @@
 package com.p_project.email;
 
-import com.p_project.email.EmailEntity;
-import com.p_project.email.EmailRepository;
-import com.p_project.email.EmailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
