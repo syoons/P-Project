@@ -1,8 +1,17 @@
 package com.p_project.user;
 
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Service //스프링이 관리해주는 객체
 @RequiredArgsConstructor //controller 와 같이 final 멤버변수 생성자 만드는 역할
@@ -28,5 +37,29 @@ public class UserService {
         user.setPwd(encodedPassword);
 
         userRepository.save(user);
+    }
+
+    public void clearSecurityContext(){
+        SecurityContextHolder.clearContext();
+    }
+
+    public void clearAccessToken(HttpServletResponse response){
+        Cookie accessCookie = new Cookie("Authorization", null);
+        accessCookie.setMaxAge(0);
+        accessCookie.setPath("/");
+        response.addCookie(accessCookie);
+    }
+
+    public void clearRefreshToken(HttpServletResponse response){
+        Cookie refreshCookie = new Cookie("RefreshToken", null);
+        refreshCookie.setMaxAge(0);
+        refreshCookie.setPath("/");
+        response.addCookie(refreshCookie);
+    }
+
+    public Map<String, String> responseMessage(String message){
+        Map<String, String> response = new HashMap<>();
+        response.put("message", message);
+        return response;
     }
 }

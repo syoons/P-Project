@@ -4,17 +4,17 @@ import com.p_project.jwt.JWTUtil;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/users")
@@ -37,57 +37,31 @@ public class UserController {
     }
 
     @PostMapping
-    public UserEntity create(@RequestBody UserEntity req) {
-        // id/created_at/updated_at은 DB가 채움
-        return repo.save(req);
-    }
-
+    public UserEntity create(@RequestBody UserEntity req) { return repo.save(req); }
 
     @PostMapping("/save")
     public String save(@ModelAttribute UserDTO userDTO){
-        System.out.println("UserController.save");
-        System.out.println("userDTO = " + userDTO);
+
+        log.info("user controller : user save");
+
         userService.save(userDTO);
 
         return "test index";
     }
 
-    @PutMapping("/{id}")
-    public UserEntity update(@PathVariable Integer id, @RequestBody UserEntity req) {
-        UserEntity u = repo.findById(id).orElseThrow();
-        u.setName(req.getName());
-        u.setGender(req.getGender());
-        u.setNickname(req.getNickname());
-        u.setDeletedAt(req.getDeletedAt());
-        return repo.save(u);
-    }
-
-    @GetMapping("/my")
-    @ResponseBody
-    public String myAPI(){
-
-        return "my route";
-    }
-
     @GetMapping("/logout")
     public String logout(HttpServletResponse response) {
 
-        System.out.println("UserController.logout");
+        log.info("user controller : user logout");
 
         // SecurityContext 초기화
-        SecurityContextHolder.clearContext();
+        userService.clearSecurityContext();
 
         // Access Token 쿠키 삭제
-        Cookie accessCookie = new Cookie("Authorization", null);
-        accessCookie.setMaxAge(0);
-        accessCookie.setPath("/");
-        response.addCookie(accessCookie);
+        userService.clearAccessToken(response);
 
         // Refresh Token 쿠키 삭제
-        Cookie refreshCookie = new Cookie("RefreshToken", null);
-        refreshCookie.setMaxAge(0);
-        refreshCookie.setPath("/");
-        response.addCookie(refreshCookie);
+        userService.clearRefreshToken(response);
 
         return "로그아웃되었습니다.";
     }
@@ -134,20 +108,30 @@ public class UserController {
 //    }
 
     @GetMapping("/login")
-    public String loginPage() {
-        return "login";
+    public ResponseEntity<Map<String, String>> loginCheck() {
+
+        Map<String, String> response = userService.responseMessage("로그인 API.");
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/reset-password")
-    public String resetPasswordPage() {
-        return "reset-password"; // reset-password.html
+    public ResponseEntity<Map<String, String>> resetPasswordPage() {
+
+        Map<String, String> response = userService.responseMessage("user reset password page API");
+
+        return ResponseEntity.ok(response);
     }
 
+
     @PostMapping("/reset-password")
-    @ResponseBody
-    public ResponseEntity<String> resetPassword(@RequestBody PasswordResetDTO dto) {
+    public ResponseEntity<Map<String, String>> resetPassword(@RequestBody PasswordResetDTO dto) {
+
         userService.resetPassword(dto);
-        return ResponseEntity.ok("비밀번호가 성공적으로 변경되었습니다.");
+
+        Map<String, String> response = userService.responseMessage("비밀번호가 성공적으로 변경되었습니다.");
+
+        return ResponseEntity.ok(response);
     }
 
 

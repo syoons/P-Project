@@ -26,6 +26,7 @@ public class EmailController {
 
     @PostMapping("/verify")
     public ResponseEntity<String> verifyCode(@RequestParam String email, @RequestParam String code) {
+
         Optional<EmailEntity> optional = repository.findById(email);
 
         if (optional.isEmpty()) {
