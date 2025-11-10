@@ -28,8 +28,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         OAuth2User oAuth2User = super.loadUser(userRequest);
 
-        System.out.println("\nCustomOAuth2UserService.class : " + oAuth2User + "\n");
-
         String registrationId = userRequest.getClientRegistration().getRegistrationId(); // "kakao"|"google"|"naver"
         OAuth2Response oAuth2Response;
 

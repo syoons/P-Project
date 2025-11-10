@@ -29,8 +29,6 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
-        System.out.println("\n SecurityFilterChain initialized\n");
-
         // CSRF 비활성화
         http.csrf(csrf -> csrf.disable());
 
@@ -84,4 +82,5 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
+
 }

@@ -6,8 +6,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,15 +28,9 @@ public class UserService {
 
     private final UserRepository userRepository; //디펜던시 추가
     private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
     private final JWTUtil jwtUtil;
 
-    public void save(UserDTO userDTO){
-        //repository 의 save 메서드 호출
-        System.out.println("\n\n\n\nuserDTO in userService : " + userDTO);
-        UserEntity userEntity = UserEntity.toUserEntity(userDTO);
-        System.out.println("\n\n\n\nUserEntity in userService" + userEntity);
-        userRepository.save(userEntity);
-    }
 
     public void resetPassword(PasswordResetDTO dto) {
         UserEntity user = userRepository.findByEmail(dto.getEmail())
@@ -95,6 +94,40 @@ public class UserService {
         } else {
             log.info("로그아웃되었습니다. (사용자 정보 없음)");
             return "로그아웃되었습니다.";
+        }
+    }
+
+    public ResponseEntity<?> login(String username, String password, HttpServletResponse response) {
+
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(username, password)
+            );
+            String role = authentication.getAuthorities().iterator().next().getAuthority();
+            String accessToken = jwtUtil.createJwt(username, role, 1000L * 60 * 60); // 1시간
+            String refreshToken = jwtUtil.createJwt(username, role, 1000L * 60 * 60 * 24 * 14); // 14일
+
+            Cookie accessCookie = new Cookie("Authorization", "Bearer " + accessToken);
+            accessCookie.setHttpOnly(true);
+            accessCookie.setPath("/");
+            accessCookie.setMaxAge(60 * 60); // 1시간
+
+            Cookie refreshCookie = new Cookie("RefreshToken", refreshToken);
+            refreshCookie.setHttpOnly(true);
+            refreshCookie.setPath("/");
+            refreshCookie.setMaxAge(60 * 60 * 24 * 14); // 14일
+
+            response.addCookie(accessCookie);
+            response.addCookie(refreshCookie);
+
+            return ResponseEntity.ok("로그인 성공");
+
+        } catch (BadCredentialsException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("아이디 또는 비밀번호가 올바르지 않습니다.");
+        } catch (AuthenticationException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("인증 실패");
         }
     }
 

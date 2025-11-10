@@ -10,8 +10,8 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @Builder
-@NoArgsConstructor  // ✅ 매개변수 없는 생성자
-@AllArgsConstructor // ✅ 모든 필드를 받는 생성자
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "`user`") // user 예약어 회피
 public class UserEntity {
 
