@@ -10,9 +10,9 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @Builder
-@NoArgsConstructor  // ✅ 매개변수 없는 생성자
-@AllArgsConstructor // ✅ 모든 필드를 받는 생성자
-@Table(name = "`user`") // user 예약어 회피
+@NoArgsConstructor  // 매개변수 없는 생성자
+@AllArgsConstructor // 모든 필드를 받는 생성자
+@Table(name = "users")
 public class UserEntity {
 
     @Id
@@ -21,6 +21,9 @@ public class UserEntity {
 
     @Column(nullable = false, length = 45)
     private String name;
+
+    @Column(nullable = false, length = 120)
+    private String email;
 
     @Column(nullable = false, length = 45)
     private String pwd;
@@ -34,7 +37,6 @@ public class UserEntity {
     // ====== OAuth 추가 필드 ======
     @Column(length = 20)    private String provider;        // GOOGLE/NAVER/KAKAO
     @Column(length = 80)    private String providerUserId;  // sub/id
-    @Column(length = 120)   private String email;           // 있을 때만 세팅
     @Column(length = 200)   private String profileImage;    // 있을 때만 세팅
     @Column(length = 20)    private String role = "USER";   // 권한(간단히 문자열)
 

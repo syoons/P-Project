@@ -1,6 +1,5 @@
 package com.p_project.jwt;
 
-import java.io.IOException;
 import com.p_project.oauth2.CustomOAuth2User;
 import com.p_project.user.UserDTO;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -14,6 +13,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.io.IOException;
 
 public class JWTFilter extends OncePerRequestFilter {
 
