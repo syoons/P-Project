@@ -1,11 +1,15 @@
 # --- 기본 빌드/캐시 폴더 ---
-/.gradle/
+.gradle/
 build/
 out/
 bin/
 
-# --- Gradle Wrapper는 포함해야 함 ---
+# --- Gradle Wrapper는 반드시 포함 ---
+!gradlew
+!gradlew.bat
+!gradle/wrapper/
 !gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
 
 # --- IDE 설정 파일 무시 (IntelliJ, STS, VSCode 등) ---
 .idea/
@@ -30,7 +34,7 @@ bin/
 # --- 실행 환경 파일 (DB, API키 등) ---
 .env
 #application-*.yml
-#application-*.properties3
+#application-*.properties
 #.env 파일에서 전부 관리해서 이그노어x
 
 # --- 테스트 관련 빌드 폴더 제외 ---
