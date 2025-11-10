@@ -1,20 +1,15 @@
 package com.p_project.user;
 
-import com.p_project.jwt.JWTUtil;
-import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.Map;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/users")
@@ -22,8 +17,6 @@ public class UserController {
 
     private final UserRepository repo;
     private final UserService userService;
-    private final JWTUtil jWTUtil;
-    private final AuthenticationManager authenticationManager;
 
 
     @GetMapping("/list")
@@ -37,112 +30,53 @@ public class UserController {
     }
 
     @PostMapping
-    public UserEntity create(@RequestBody UserEntity req) {
-        // id/created_at/updated_at은 DB가 채움
-        return repo.save(req);
-    }
-
-
-    @PostMapping("/save")
-    public String save(@ModelAttribute UserDTO userDTO){
-        System.out.println("UserController.save");
-        System.out.println("userDTO = " + userDTO);
-        userService.save(userDTO);
-
-        return "test index";
-    }
-
-    @PutMapping("/{id}")
-    public UserEntity update(@PathVariable Integer id, @RequestBody UserEntity req) {
-        UserEntity u = repo.findById(id).orElseThrow();
-        u.setName(req.getName());
-        u.setGender(req.getGender());
-        u.setNickname(req.getNickname());
-        u.setDeletedAt(req.getDeletedAt());
-        return repo.save(u);
-    }
-
-    @GetMapping("/my")
-    @ResponseBody
-    public String myAPI(){
-
-        return "my route";
-    }
+    public UserEntity create(@RequestBody UserEntity req) { return repo.save(req); }
 
     @GetMapping("/logout")
-    public String logout(HttpServletResponse response) {
-
-        System.out.println("UserController.logout");
-
-        // SecurityContext 초기화
-        SecurityContextHolder.clearContext();
-
-        // Access Token 쿠키 삭제
-        Cookie accessCookie = new Cookie("Authorization", null);
-        accessCookie.setMaxAge(0);
-        accessCookie.setPath("/");
-        response.addCookie(accessCookie);
-
-        // Refresh Token 쿠키 삭제
-        Cookie refreshCookie = new Cookie("RefreshToken", null);
-        refreshCookie.setMaxAge(0);
-        refreshCookie.setPath("/");
-        response.addCookie(refreshCookie);
-
-        return "로그아웃되었습니다.";
+    public ResponseEntity<String> logout(HttpServletRequest request, HttpServletResponse response) {
+        String message = userService.logoutUser(request, response);
+        return ResponseEntity.ok(message);
     }
 
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@RequestBody UserDTO userDTO) {
+        return userService.register(userDTO);
+    }
 
-    //일반회원 로그인시
+    //일반회원 로그인
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestParam String username,
                                    @RequestParam String password,
                                    HttpServletResponse response) {
+        return userService.login(username, password, response);
+    }
 
-        try {
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(username, password)
-            );
 
-            String role = authentication.getAuthorities().iterator().next().getAuthority();
+    //로그인 페이지 반환
+    @GetMapping("/login")
+    public ResponseEntity<Map<String, String>> loginCheck() {
 
-            String accessToken = jWTUtil.createJwt(username, role, 1000L * 60 * 60);
+        Map<String, String> response = userService.responseMessage("로그인 API.");
 
-            String refreshToken = jWTUtil.createJwt(username, role, 1000L * 60 * 60 * 24 * 14);
-
-            // 쿠키에 저장
-            Cookie accessCookie = new Cookie("Authorization", "Bearer " + accessToken);
-            accessCookie.setHttpOnly(true);
-            accessCookie.setPath("/");
-            accessCookie.setMaxAge(60 * 60); // 1시간
-
-            Cookie refreshCookie = new Cookie("RefreshToken", refreshToken);
-            refreshCookie.setHttpOnly(true);
-            refreshCookie.setPath("/");
-            refreshCookie.setMaxAge(60 * 60 * 24 * 14); // 14일
-
-            response.addCookie(accessCookie);
-            response.addCookie(refreshCookie);
-
-            return ResponseEntity.ok("로그인 성공");
-
-        } catch (BadCredentialsException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("아이디 또는 비밀번호가 올바르지 않습니다.");
-        } catch (AuthenticationException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("인증 실패");
-        }
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/reset-password")
-    public String resetPasswordPage() {
-        return "reset-password"; // reset-password.html
+    public ResponseEntity<Map<String, String>> resetPasswordPage() {
+
+        Map<String, String> response = userService.responseMessage("user reset password page API");
+
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/reset-password")
-    @ResponseBody
-    public ResponseEntity<String> resetPassword(@RequestBody PasswordResetDTO dto) {
+    public ResponseEntity<Map<String, String>> resetPassword(@RequestBody PasswordResetDTO dto) {
+
         userService.resetPassword(dto);
-        return ResponseEntity.ok("비밀번호가 성공적으로 변경되었습니다.");
+
+        Map<String, String> response = userService.responseMessage("비밀번호가 성공적으로 변경되었습니다.");
+
+        return ResponseEntity.ok(response);
     }
 
 

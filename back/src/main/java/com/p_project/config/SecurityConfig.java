@@ -29,38 +29,46 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
-
-        System.out.println("\nSecurityFilterChain\n");
-
-        //CSRF 비활성화함
+        // CSRF 비활성화
         http.csrf(csrf -> csrf.disable());
 
-        //기본 로그인 방식 비활성화 -> 소셜만 가능함 지금은
-        http.formLogin(form -> form.disable());
+        // 기본 로그인(formLogin) 활성화
+        http.formLogin(form -> form
+                .loginPage("/api/users/login")               // 커스텀 로그인 페이지 URL (없으면 스프링 기본 로그인폼)
+                .loginProcessingUrl("/loginProc")  // 로그인 요청 처리 URL
+                .defaultSuccessUrl("/", true)      // 로그인 성공 시 이동할 페이지
+                .permitAll()
+        );
+
+        // Basic 인증 비활성화 (JWT와 form만 사용)
         http.httpBasic(basic -> basic.disable());
 
-        //세션을 Stateless로 설정 (JWT 사용)
+        // JWT 기반 API용 요청은 세션 사용 X (Stateless)
         http.sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         );
 
-        //JWT 필터 등록 -> 여기서 jwt 인터셉터 느낌 필터가 인터셉터 이후에 작동
+        // JWT 필터 추가
         http.addFilterBefore(new JWTFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class);
 
-        //경로별 인가 설정 (최신 문법) , spring 버전 확인필요
+        // 접근 권한 설정
         http.authorizeHttpRequests(auth -> auth
-                //.requestMatchers("/auth/clear").permitAll()
-                //.requestMatchers("/", "/login/**", "/oauth2/**","/auth/**", "/css/**", "/js/**").permitAll()
+                //.requestMatchers("/", "/login", "/loginProc", "/oauth2/**", "/css/**", "/js/**").permitAll()
                 .anyRequest().permitAll()
         );
 
-        //OAuth2 설정
+        // OAuth2 소셜 로그인 설정
         http.oauth2Login(oauth2 -> oauth2
+                .loginPage("/login")   // 같은 로그인 페이지에서 시작
                 .userInfoEndpoint(user -> user.userService(customOAuth2UserService))
                 .successHandler(customSuccessHandler)
         );
 
-        http.logout(logout -> logout.disable());
+        // 로그아웃 활성화 (선택)
+        http.logout(logout -> logout
+                .logoutUrl("/logout")
+                .logoutSuccessUrl("/")
+        );
 
         return http.build();
     }
@@ -74,5 +82,6 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
+
 }
 

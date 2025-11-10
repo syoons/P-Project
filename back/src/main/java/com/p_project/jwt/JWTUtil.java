@@ -5,6 +5,8 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -50,5 +52,15 @@ public class JWTUtil {
                 .setExpiration(new Date(System.currentTimeMillis() + expiredMs))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
+    }
+
+    public String extractAccessToken(HttpServletRequest request) {
+        if (request.getCookies() == null) return null;
+        for (Cookie cookie : request.getCookies()) {
+            if (cookie.getName().equals("accessToken")) {
+                return cookie.getValue();
+            }
+        }
+        return null;
     }
 }
