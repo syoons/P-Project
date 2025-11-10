@@ -38,6 +38,12 @@ public class UserController {
         return ResponseEntity.ok(message);
     }
 
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@RequestBody UserDTO userDTO) {
+        return userService.register(userDTO);
+    }
+
+    //일반회원 로그인
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestParam String username,
                                    @RequestParam String password,

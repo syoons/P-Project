@@ -131,5 +131,26 @@ public class UserService {
         }
     }
 
+    public ResponseEntity<?> register(UserDTO userDTO) {
+        if (userRepository.findByEmail(userDTO.getEmail()).isPresent()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body("이미 사용 중인 이메일입니다.");
+        }
+
+        if (userRepository.findByNickname(userDTO.getNickname()).isPresent()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body("이미 사용 중인 닉네임입니다.");
+        }
+
+        String encodedPwd = passwordEncoder.encode(userDTO.getPwd());
+        userDTO.setPwd(encodedPwd);
+
+        UserEntity userEntity = UserEntity.toUserEntity(userDTO);
+        userRepository.save(userEntity);
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body("회원가입이 완료되었습니다.");
+    }
+
 
 }
