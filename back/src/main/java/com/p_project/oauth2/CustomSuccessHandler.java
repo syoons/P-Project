@@ -38,7 +38,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         response.addCookie(createCookie("Authorization", accessToken));
         response.addCookie(createCookie("RefreshToken", refreshToken));
 
-        response.sendRedirect("/main"); // 같은 서버 내 URL로만 이동 (http://localhost:8080 생략)
+        response.sendRedirect("/main");
     }
 
     private Cookie createCookie(String key, String value) {
