@@ -25,7 +25,7 @@ public class WritingSessionEntity {
     private Type type;
 
     @Column(length = 45, nullable = false)
-    private String status;
+    private WritingStatus status;
 
     @Column(length = 45, nullable = false)
     private String genre;
@@ -54,5 +54,11 @@ public class WritingSessionEntity {
     public enum Type {
         diary,
         book
+    }
+
+    public enum WritingStatus {
+        COMPLETE,   // 완료
+        DRAFT,      // 작성 중
+        DELETED    // 삭제
     }
 }

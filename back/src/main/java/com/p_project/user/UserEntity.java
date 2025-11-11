@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -33,6 +35,9 @@ public class UserEntity {
 
     @Column(nullable = false, length = 45)
     private String nickname;
+
+    @Column(name = "birth_date")
+    private LocalDate birthDate;
 
     // ====== OAuth 추가 필드 ======
     @Column(length = 20)    private String provider;        // GOOGLE/NAVER/KAKAO
@@ -71,5 +76,10 @@ public class UserEntity {
                 .build();
     }
 
+    public void updateProfile(String nickname, String email, String gender) {
+        this.nickname = nickname;
+        this.email = email;
+        this.gender = gender;
+    }
 
 }

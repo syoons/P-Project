@@ -63,5 +63,4 @@ public class UserDTO {
                 .profileImage(user.getProfileImage())
                 .build();
     }
-
 }

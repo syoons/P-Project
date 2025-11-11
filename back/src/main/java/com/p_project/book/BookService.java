@@ -11,7 +11,7 @@ public class BookService {
     private final BookRepository bookRepository;
 
     public int countActiveBookSession(Long userId){
-        return bookRepository.countByUserIdAndTypeAndStatusAndDeletedAtIsNull(userId, WritingSessionEntity.Type.book, "complete");
+        return bookRepository.countByUserIdAndTypeAndStatusAndDeletedAtIsNull(userId, WritingSessionEntity.Type.book, WritingSessionEntity.WritingStatus.COMPLETE);
     }
 
 }

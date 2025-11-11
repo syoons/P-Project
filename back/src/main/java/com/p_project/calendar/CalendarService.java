@@ -3,6 +3,7 @@ package com.p_project.calendar;
 import com.p_project.book.BookRepository;
 import com.p_project.diary.DiaryDTO;
 import com.p_project.diary.DiaryRepository;
+import com.p_project.user.UserEntity;
 import com.p_project.user.UserRepository;
 import com.p_project.writing.WritingSessionEntity;
 import lombok.RequiredArgsConstructor;
@@ -21,8 +22,8 @@ public class CalendarService {
 
     public CalendarDTO getCalendarSummary(Long userId, LocalDate date){
 
-        int countDiary = diaryRepository.countByUserIdAndTypeAndStatusAndDeletedAtIsNull(userId, WritingSessionEntity.Type.diary, "complete");
-        int countBook = bookRepository.countByUserIdAndTypeAndStatusAndDeletedAtIsNull(userId, WritingSessionEntity.Type.diary, "complete");
+        int countDiary = diaryRepository.countByUserIdAndTypeAndStatusAndDeletedAtIsNull(userId, WritingSessionEntity.Type.diary, WritingSessionEntity.WritingStatus.COMPLETE);
+        int countBook = bookRepository.countByUserIdAndTypeAndStatusAndDeletedAtIsNull(userId, WritingSessionEntity.Type.diary, WritingSessionEntity.WritingStatus.COMPLETE);
         int totalNum = countDiary + countBook;
 
 //      date 값이 null이라면 오늘 날짜로 체크
@@ -43,10 +44,12 @@ public class CalendarService {
 
     public CalendarDTO getFriendCalendarSummary(Long userId, Long friendId, LocalDate date){
 
-        int countDiary = diaryRepository.countByUserIdAndTypeAndStatusAndDeletedAtIsNull(userId, WritingSessionEntity.Type.diary, "complete");
-        int countBook = bookRepository.countByUserIdAndTypeAndStatusAndDeletedAtIsNull(userId, WritingSessionEntity.Type.diary, "complete");
+        int countDiary = diaryRepository.countByUserIdAndTypeAndStatusAndDeletedAtIsNull(userId, WritingSessionEntity.Type.diary, WritingSessionEntity.WritingStatus.COMPLETE);
+        int countBook = bookRepository.countByUserIdAndTypeAndStatusAndDeletedAtIsNull(userId, WritingSessionEntity.Type.diary, WritingSessionEntity.WritingStatus.COMPLETE);
         int totalNum = countDiary + countBook;
-        String friendNickName = userRepository.findById(friendId).getNickname();
+        String friendNickName = userRepository.findById(friendId)
+                .map(UserEntity::getNickname)
+                .orElse("Unknown");
 
 
 //      date 값이 null이라면 오늘 날짜로 체크

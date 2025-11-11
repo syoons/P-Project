@@ -11,7 +11,7 @@ public class DiaryService {
     private final DiaryRepository diaryRepository;
 
     public int countActiveDiarySession(Long userId){
-        return diaryRepository.countByUserIdAndTypeAndStatusAndDeletedAtIsNull(userId, WritingSessionEntity.Type.diary, "complete");
+        return diaryRepository.countByUserIdAndTypeAndStatusAndDeletedAtIsNull(userId, WritingSessionEntity.Type.diary, WritingSessionEntity.WritingStatus.COMPLETE);
     }
 
 }

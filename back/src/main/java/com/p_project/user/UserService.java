@@ -163,7 +163,9 @@ public class UserService {
 
     public String findNickNameByUserId(Long userId){
 
-        return userRepository.findById(userId).getNickname();
+        return userRepository.findById(userId)
+                .map(UserEntity::getNickname)
+                .orElse("Unknown");
     }
 
     public Optional<UserEntity> findByNickname(String nickName){

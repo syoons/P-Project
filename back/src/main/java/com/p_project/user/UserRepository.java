@@ -10,7 +10,7 @@ public interface UserRepository extends JpaRepository<UserEntity, Integer> {
     // 필요한 쿼리 메서드를 추가 가능 (예: findByNickname(String nickname))
     Optional<UserEntity> findByProviderAndProviderUserId(String provider, String providerUserId);
 
-    UserEntity findById(Long userId);
+    Optional<UserEntity> findById(Long userId);
 
     Optional<UserEntity> findByNickname(String nickName);
 
