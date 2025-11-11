@@ -51,7 +51,6 @@ public class UserController {
         return userService.login(userEmail, password, response);
     }
 
-
     //로그인 페이지 반환
     @GetMapping("/login")
     public ResponseEntity<Map<String, String>> loginCheck() {
