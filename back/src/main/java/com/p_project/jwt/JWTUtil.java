@@ -25,11 +25,6 @@ public class JWTUtil {
         key = Keys.hmacShaKeyFor(byteSecretKey);
     }
 
-//    public String getUserEmail(String token) {
-//        if (token.startsWith("Bearer ")) token = token.substring(7);
-//        return getClaims(token).get("email", String.class);
-//    }
-
     public String getUserEmail(String token) {
 
         return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody().get("userEmail", String.class);
@@ -45,10 +40,10 @@ public class JWTUtil {
         return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody().getExpiration().before(new Date());
     }
 
-    public String createJwt(String username, String role, Long expiredMs) {
+    public String createJwt(String userEmail, String role, Long expiredMs) {
 
         Claims claims = Jwts.claims();
-        claims.put("username", username);
+        claims.put("userEmail", userEmail);
         claims.put("role", role);
 
         return Jwts.builder()
