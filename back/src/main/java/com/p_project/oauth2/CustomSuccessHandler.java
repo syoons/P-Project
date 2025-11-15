@@ -26,19 +26,18 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
             throws IOException, ServletException {
 
         CustomOAuth2User customUserDetails = (CustomOAuth2User) authentication.getPrincipal();
-        String email = customUserDetails.getEmail();
-        String username = customUserDetails.getUsername();
+        String userEmail = customUserDetails.getEmail();
         String role = authentication.getAuthorities().iterator().next().getAuthority();
 
         // Access Token (1시간)
-        String accessToken = jwtUtil.createJwt(username, role, 1000L * 60 * 60);
+        String accessToken = jwtUtil.createJwt(userEmail, role, 1000L * 60 * 60);
 
         // Refresh Token (14일)
-        String refreshToken = jwtUtil.createJwt(username, role, 1000L * 60 * 60 * 24 * 14);
+        String refreshToken = jwtUtil.createJwt(userEmail, role, 1000L * 60 * 60 * 24 * 14);
 
-        System.out.println("\n✅ CustomSuccessHandler.java");
-        System.out.println("accessToken : " + accessToken);
-        System.out.println("refreshToken : " + refreshToken + "\n");
+//        System.out.println("\n✅ CustomSuccessHandler.java");
+//        System.out.println("accessToken : " + accessToken);
+//        System.out.println("refreshToken : " + refreshToken + "\n");
 
         response.addCookie(createCookie("Authorization", accessToken));
         response.addCookie(createCookie("RefreshToken", refreshToken));

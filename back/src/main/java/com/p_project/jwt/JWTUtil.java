@@ -42,10 +42,10 @@ public class JWTUtil {
         return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody().getExpiration().before(new Date());
     }
 
-    public String createJwt(String username, String role, Long expiredMs) {
+    public String createJwt(String userEmail, String role, Long expiredMs) {
 
         Claims claims = Jwts.claims();
-        claims.put("username", username);
+        claims.put("userEmail", userEmail);
         claims.put("role", role);
 
         return Jwts.builder()

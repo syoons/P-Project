@@ -75,7 +75,7 @@ public class UserService {
             String accessToken = jwtUtil.extractAccessToken(request);
 
             if (accessToken != null && !jwtUtil.isExpired(accessToken)) {
-                userEmail = jwtUtil.getUsername(accessToken);
+                userEmail = jwtUtil.getEmail(accessToken);
             }
 
         } catch (Exception e) {
