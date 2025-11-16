@@ -61,14 +61,6 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/reset-password")
-    public ResponseEntity<Map<String, String>> resetPasswordPage() {
-
-        Map<String, String> response = userService.responseMessage("user reset password page API");
-
-        return ResponseEntity.ok(response);
-    }
-
     @PostMapping("/reset-password")
     public ResponseEntity<Map<String, String>> resetPassword(@RequestBody PasswordResetDTO dto) {
 

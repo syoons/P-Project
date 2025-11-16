@@ -2,15 +2,19 @@ package com.p_project.config;
 
 import com.p_project.jwt.JWTFilter;
 import com.p_project.oauth2.CustomSuccessHandler;
+import com.p_project.sociaLogin.CustomOAuth2FailureHandler;
 import com.p_project.sociaLogin.CustomOAuth2UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -28,6 +32,8 @@ public class SecurityConfig {
 
     private final CustomOAuth2UserService customOAuth2UserService;
     private final CustomSuccessHandler customSuccessHandler;
+    private final CustomOAuth2FailureHandler customOAuth2FailureHandler;
+    private final UserDetailsService userDetailsService;
     private final JWTFilter jwtFilter;
 
     @Bean
@@ -36,14 +42,6 @@ public class SecurityConfig {
         // CSRF 비활성화
         http.csrf(csrf -> csrf.disable())
         .cors(cors -> cors.configurationSource(corsConfigurationSource()));
-
-        // 기본 로그인(formLogin) 활성화 -> jwt 기반 프로젝트는 formLogin 방식 절대 사용 안함
-        /*http.formLogin(form -> form
-                .loginPage("/api/users/login")               // 커스텀 로그인 페이지 URL (없으면 스프링 기본 로그인폼)
-                .loginProcessingUrl("/loginProc")  // 로그인 요청 처리 URL
-                .defaultSuccessUrl("/", true)      // 로그인 성공 시 이동할 페이지
-                .permitAll()
-        );*/
 
         http.formLogin(form -> form.disable());
 
@@ -55,6 +53,7 @@ public class SecurityConfig {
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         );
 
+        http.authenticationProvider(authenticationProvider(userDetailsService));
 
         // 접근 권한 설정
         http.authorizeHttpRequests(auth -> auth
@@ -66,20 +65,21 @@ public class SecurityConfig {
                         "/webjars/**",
                         "/api/users/login",
                         "/oauth2/authorization/**",
-                        "/login/oauth2/**"
+                        "/login/oauth2/**",
+                        "/api/users/logout"
                 ).permitAll()
-                .anyRequest().authenticated()
+                .anyRequest().permitAll()
         );
         // JWT 필터 추가
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         // OAuth2 소셜 로그인 설정
         http.oauth2Login(oauth2 -> oauth2
-                .loginPage("/login")   // 같은 로그인 페이지에서 시작
-                .userInfoEndpoint(user -> user.userService(customOAuth2UserService))
+                .loginPage("/login")
+                .userInfoEndpoint(u -> u.userService(customOAuth2UserService))
                 .successHandler(customSuccessHandler)
+                .failureHandler(customOAuth2FailureHandler)
         );
-
 
         // 로그아웃 활성화 (선택)
         http.logout(logout -> logout
@@ -114,6 +114,15 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
+
+    @Bean
+    public AuthenticationProvider authenticationProvider(UserDetailsService userDetailsService) {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setUserDetailsService(userDetailsService);
+        provider.setPasswordEncoder(passwordEncoder());
+        return provider;
+    }
+
 
 }
 

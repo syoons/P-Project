@@ -23,11 +23,7 @@ public class UserDTO {
 
     private String nickname;
 
-    // ===== OAuth / 프로필 =====
-    private String provider;        // GOOGLE / NAVER / KAKAO
-    private String providerUserId;  // sub / id
-    private String email;           // 있을 때만
-    private String profileImage;    // 있을 때만
+    private String email;
 
     @Builder.Default
     private String role = "USER";
@@ -44,10 +40,7 @@ public class UserDTO {
                 .pwd(e.getPwd())
                 .gender(e.getGender())
                 .nickname(e.getNickname())
-                .provider(e.getProvider())
-                .providerUserId(e.getProviderUserId())
                 .email(e.getEmail())
-                .profileImage(e.getProfileImage())
                 .role(e.getRole())
                 .createdAt(e.getCreatedAt())
                 .updatedAt(e.getUpdatedAt())
@@ -60,7 +53,6 @@ public class UserDTO {
                 .id(user.getId())
                 .nickname(user.getNickname())
                 .email(user.getEmail())
-                .profileImage(user.getProfileImage())
                 .build();
     }
 }

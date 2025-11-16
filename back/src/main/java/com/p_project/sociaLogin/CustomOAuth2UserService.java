@@ -11,15 +11,15 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
-
 @Service
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private final UserRepository userRepository;
+    private final SocialIdentityRepository socialRepo;
 
-    public CustomOAuth2UserService(UserRepository userRepository) {
+    public CustomOAuth2UserService(UserRepository userRepository, SocialIdentityRepository socialRepo) {
         this.userRepository = userRepository;
+        this.socialRepo = socialRepo;
     }
 
     @Override
@@ -28,7 +28,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         OAuth2User oAuth2User = super.loadUser(userRequest);
 
-        String registrationId = userRequest.getClientRegistration().getRegistrationId(); // "kakao"|"google"|"naver"
+        // Provider 구분
+        String registrationId = userRequest.getClientRegistration().getRegistrationId();
         OAuth2Response oAuth2Response;
 
         if ("naver".equalsIgnoreCase(registrationId)) {
@@ -42,69 +43,28 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         }
 
         // 소셜 고유키
-        String provider       = oAuth2Response.getProvider();    // e.g. "kakao"
-        String providerUserId = oAuth2Response.getProviderId();  // e.g. "3221064173"
+        String providerUserId = oAuth2Response.getProviderId();
         if (providerUserId == null || providerUserId.isBlank()) {
-            throw new OAuth2AuthenticationException("providerUserId is null/blank");
+            throw new OAuth2AuthenticationException("Invalid social provider user id");
         }
 
-        // 표시용 닉네임(기존 로직 유지)
-        String username = provider + " " + providerUserId;
+        Provider providerEnum = Provider.valueOf(registrationId.toLowerCase());
 
-        // 이메일/이름은 null일 수 있으니 방어
-        String email = oAuth2Response.getEmail();
-        String name  = oAuth2Response.getName();
-        if (name == null || name.isBlank()) {
-            name = username; // 최소한 비어있지 않게
-        }
+        // 1) social_identities에서 provider + providerUserId 조회
+        SocialIdentityEntity social = socialRepo.findByProviderAndProviderId(providerEnum, providerUserId)
+                .orElseThrow(() -> new OAuth2AuthenticationException("해당 소셜 계정은 회원가입이 필요합니다."));
 
-        // gender 매핑: KakaoResponse에 getGender()가 있다면 캐스팅, 없으면 'U'
-        String gender = "U";
-        if (oAuth2Response instanceof KakaoResponse kr) {
-            String kakaoGender = kr.getGender(); // "male"|"female"|null
-            if ("male".equalsIgnoreCase(kakaoGender)) gender = "M";
-            else if ("female".equalsIgnoreCase(kakaoGender)) gender = "F";
-            else gender = "U";
-        }
+        // 2) users 테이블 기존 회원 조회
+        UserEntity user = userRepository.findById(social.getUserId())
+                .orElseThrow(() -> new OAuth2AuthenticationException("연결된 회원 정보를 찾을 수 없습니다."));
 
-        // 조회 기준 변경: name이 아니라 provider+providerUserId
-        Optional<UserEntity> opt = userRepository.findByProviderAndProviderUserId(provider, providerUserId);
-
-        UserEntity user = opt.orElseGet(UserEntity::new);
-
-        // 필수 식별키
-        user.setProvider(provider);
-        user.setProviderUserId(providerUserId);
-
-        // 표시용
-        if (user.getNickname() == null || user.getNickname().isBlank()) {
-            user.setNickname(username);
-        }
-
-        // 기본 정보
-        user.setName(name);
-        user.setEmail(email);
-
-        // NOT NULL 컬럼 방어
-        if (user.getGender() == null || user.getGender().isBlank()) {
-            user.setGender(gender); // 'M'/'F'/'U'
-        }
-
-        // 최초 생성 시 ROLE 기본값
-        if (user.getRole() == null || user.getRole().isBlank()) {
-            user.setRole("ROLE_USER");
-        }
-
-        // 필요시 프로필 이미지/생일/폰번호 등도 매핑 가능
-        // if (oAuth2Response instanceof KakaoResponse krr) { ... }
-
-        userRepository.save(user);
-
-        // Security 컨텍스트에 넣을 최소 정보
+        // 3) Security DTO 생성
         com.p_project.user.UserDTO userDTO = new com.p_project.user.UserDTO();
+        userDTO.setId(user.getId());
         userDTO.setNickname(user.getNickname());
         userDTO.setName(user.getName());
         userDTO.setRole(user.getRole());
+        userDTO.setEmail(user.getEmail());
 
         return new CustomOAuth2User(userDTO);
     }

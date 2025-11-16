@@ -31,9 +31,31 @@ public class JWTFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain)
             throws ServletException, IOException {
+
+        String uri = request.getRequestURI();
+
+        if (uri.startsWith("/oauth2") ||
+                uri.startsWith("/login/oauth2") ||
+                uri.startsWith("/login") ||
+                uri.startsWith("/error") ||
+                uri.startsWith("/favicon") ||
+                uri.startsWith("/swagger") ||
+                uri.startsWith("/v3") ||
+                uri.startsWith("/webjars")) {
+
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        Cookie[] cookies = request.getCookies();
         log.info(">>> [JWTFilter] 요청 경로: {}", request.getRequestURI());
-        log.info("🔍 JWTFilter 실행됨");
-        log.info("Header Authorization = {}", request.getHeader("Authorization"));
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                log.info(">>> Cookie: {} = {}", cookie.getName(), cookie.getValue());
+            }
+        } else {
+            log.info(">>> 쿠키 없음 (Cookie[] is null)");
+        }
 
         String accessToken = null;
 

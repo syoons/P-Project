@@ -107,16 +107,15 @@ public class UserService {
             String accessToken = jwtUtil.createJwt(email, role, 1000L * 60 * 60); // 1시간
             String refreshToken = jwtUtil.createJwt(email, role, 1000L * 60 * 60 * 24 * 14); // 14일
 
-            Cookie accessCookie = new Cookie("Authorization", "Bearer " + accessToken);
+            Cookie accessCookie = new Cookie("accessToken", accessToken);
             accessCookie.setHttpOnly(true);
             accessCookie.setPath("/");
-            accessCookie.setMaxAge(60 * 60); // 1시간
+            accessCookie.setMaxAge(60 * 60);
 
             Cookie refreshCookie = new Cookie("RefreshToken", refreshToken);
             refreshCookie.setHttpOnly(true);
             refreshCookie.setPath("/");
-            refreshCookie.setMaxAge(60 * 60 * 24 * 14); // 14일
-
+            refreshCookie.setMaxAge(60 * 60 * 24 * 14);
             response.addCookie(accessCookie);
             response.addCookie(refreshCookie);
 

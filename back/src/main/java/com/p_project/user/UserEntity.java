@@ -27,7 +27,7 @@ public class UserEntity {
     @Column(nullable = false, length = 120)
     private String email;
 
-    @Column(nullable = false, length = 45)
+    @Column(nullable = false, length = 255)
     private String pwd;
 
     @Column(nullable = false, length = 1)
@@ -39,11 +39,8 @@ public class UserEntity {
     @Column(name = "birth_date")
     private LocalDate birthDate;
 
-    // ====== OAuth 추가 필드 ======
-    @Column(length = 20)    private String provider;        // GOOGLE/NAVER/KAKAO
-    @Column(length = 80)    private String providerUserId;  // sub/id
-    @Column(length = 200)   private String profileImage;    // 있을 때만 세팅
-    @Column(length = 20)    private String role = "USER";   // 권한(간단히 문자열)
+    @Column(nullable = false, columnDefinition = "enum('admin','user')")
+    private String role;   // admin 또는 user
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -65,10 +62,7 @@ public class UserEntity {
                 .pwd(dto.getPwd())
                 .gender(dto.getGender())
                 .nickname(dto.getNickname())
-                .provider(dto.getProvider())
-                .providerUserId(dto.getProviderUserId())
                 .email(dto.getEmail())
-                .profileImage(dto.getProfileImage())
                 .role(dto.getRole())
                 .createdAt(dto.getCreatedAt())
                 .updatedAt(dto.getUpdatedAt())
