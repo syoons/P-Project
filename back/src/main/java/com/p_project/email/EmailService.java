@@ -1,41 +1,53 @@
 package com.p_project.email;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.util.Optional;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class EmailService {
 
-    private final EmailRepository repository;
     private final JavaMailSender mailSender;
 
-    public void sendVerificationCode(String email) {
-        String code = createCode();
+    // 메모리 저장소 (email → 인증정보)
+    private final Map<String, VerificationInfo> verificationStore = new ConcurrentHashMap<>();
 
-        // DB에 저장 (5분 유효)
-        EmailEntity verification = EmailEntity.builder()
-                .email(email)
-                .code(code)
-                .expireTime(LocalDateTime.now().plusMinutes(5))
-                .verified(false)
-                .build();
+    private static class VerificationInfo {
+        String code;
+        long expireTime; // ms 단위
 
-        repository.save(verification);
-
-        // 이메일 전송
-        sendEmail(email, code);
+        VerificationInfo(String code, long expireTime) {
+            this.code = code;
+            this.expireTime = expireTime;
+        }
     }
+
+    // 인증 코드 생성 및 저장
+    public void sendVerificationCode(String email) {
+
+        String code = createCode();
+        long expireTime = System.currentTimeMillis() + (5 * 60 * 1000); // 5분
+
+        verificationStore.put(email, new VerificationInfo(code, expireTime));
+
+        sendEmail(email, code);
+
+        log.info(">>> 이메일 인증코드 = " + code);
+    }
+
 
     private String createCode() {
         return String.valueOf((int)(Math.random() * 900000) + 100000);
     }
+
 
     private void sendEmail(String email, String code) {
         SimpleMailMessage message = new SimpleMailMessage();
@@ -45,26 +57,29 @@ public class EmailService {
         mailSender.send(message);
     }
 
-    public ResponseEntity<String> verifyEmailCode(String email, String code) {
 
-        Optional<EmailEntity> optional = repository.findById(email);
+    // 인증 코드 검증
+    public ResponseEntity<String> verifyEmailCode(String email, String inputCode) {
 
-        if (optional.isEmpty()) {
+        VerificationInfo info = verificationStore.get(email);
+
+        if (info == null) {
             return ResponseEntity.badRequest().body("인증 요청을 먼저 해주세요.");
         }
 
-        EmailEntity verification = optional.get();
-
-        if (verification.getExpireTime().isBefore(LocalDateTime.now())) {
+        // 만료 확인
+        if (System.currentTimeMillis() > info.expireTime) {
+            verificationStore.remove(email);
             return ResponseEntity.badRequest().body("인증 코드가 만료되었습니다.");
         }
 
-        if (!verification.getCode().equals(code)) {
+        // 코드 확인
+        if (!info.code.equals(inputCode)) {
             return ResponseEntity.badRequest().body("인증 코드가 일치하지 않습니다.");
         }
 
-        verification.setVerified(true);
-        repository.save(verification);
+        // 인증 성공 → 저장소에서 제거
+        verificationStore.remove(email);
 
         return ResponseEntity.ok("이메일 인증 성공!");
     }
