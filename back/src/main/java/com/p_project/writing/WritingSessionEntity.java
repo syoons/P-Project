@@ -25,22 +25,31 @@ public class WritingSessionEntity {
     private Type type;
 
     @Enumerated(EnumType.STRING)
-    @Column(length = 45, nullable = false)
+    @Column(length = 45)
     private WritingStatus status;
 
-    @Column(length = 45, nullable = false)
+    @Column(length = 45)
     private String genre;
 
-    @Column(length = 45, nullable = false)
+    @Column(length = 45)
     private String emotion;
 
-    @Column(length = 45, nullable = false)
+    @Column(length = 100)
     private String title;
 
     @Column(columnDefinition = "TEXT")
     private String content;
 
-    @Column(name = "created_at", nullable = false, updatable = false,
+    @Column(name = "recommend_title", length = 100)
+    private String recommendTitle;
+
+    @Column(name = "recommend_genre",length = 45)
+    private String recommendGenre;
+
+    @Column(nullable = false)
+    private int extraQuestions = 0;   // 추가 질문 개수
+
+    @Column(name = "created_at",
             columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime createdAt;
 
