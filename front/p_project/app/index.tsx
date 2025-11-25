@@ -4,7 +4,8 @@ import { View, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router'; // expo-router를 사용
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { globalStyles } from '../styles/globalStyles';
-
+import { loginUser } from '../api/services';
+import { socialLogin } from "../api/socialLogin";
 
 export default function LoginScreen() {
   const router = useRouter(); // expo-router의 router 훅 사용
@@ -19,35 +20,25 @@ export default function LoginScreen() {
       return;
     }
 
-    if (!email.includes('@')) {
-      Alert.alert('알림', '올바른 이메일 주소를 입력해주세요.');
-      return;
-    }
-
     setLoading(true);
 
-    // 실제 환경에서는 서버 API 호출
-    setTimeout(async () => {
-      try {
-        const userData = {
-          id: Date.now(),
-          email: email.trim(),
-          username: email.split('@')[0],
-          name: email.split('@')[0],
-          joinDate: new Date().toLocaleDateString(),
-          profileImage: null
-        };
-        
-        await AsyncStorage.setItem('user', JSON.stringify(userData));
-        router.replace('..//(tabs)'); // expo-router를 사용하여 경로 이동
-      } catch (error) {
-        Alert.alert('오류', '로그인 처리 중 오류가 발생했습니다.');
-      } finally {
-        setLoading(false);
-      }
-    }, 1000);
-  };
+    try {
+      // 🔥 실제 백엔드 API 요청
+      const data = await loginUser(email.trim(), password.trim());
 
+      // 로그인 성공 → 유저 정보 저장
+      await AsyncStorage.setItem("user", JSON.stringify(data));
+
+      // 🔥 tabs로 이동
+      router.replace("./(tabs)/home");
+
+    } catch (error) {
+      console.error(error);
+      Alert.alert("로그인 실패", "이메일 또는 비밀번호가 올바르지 않습니다.");
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <View style={globalStyles.screen}>
       <View style={globalStyles.loginContainer}>
@@ -87,17 +78,26 @@ export default function LoginScreen() {
         </TouchableOpacity>
 
         {/* 간편 로그인 버튼 추가 */}
-        <View style={globalStyles.socialLoginContainer}>
-          <TouchableOpacity style={[globalStyles.socialButton, { backgroundColor: '#FEE500' }]} onPress={() => {}}>
-            <Text style={globalStyles.socialButtonText}>카카오 로그인</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[globalStyles.socialButton, { backgroundColor: '#34b7f1' }]} onPress={() => {}}>
-            <Text style={globalStyles.socialButtonText}>구글 로그인</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[globalStyles.socialButton, { backgroundColor: '#00C300' }]} onPress={() => {}}>
-            <Text style={globalStyles.socialButtonText}>네이버 로그인</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+  style={[globalStyles.socialButton, { backgroundColor: '#FEE500' }]}
+  onPress={() => socialLogin("kakao")}
+>
+  <Text style={globalStyles.socialButtonText}>카카오 로그인</Text>
+</TouchableOpacity>
+
+<TouchableOpacity
+  style={[globalStyles.socialButton, { backgroundColor: '#34b7f1' }]}
+  onPress={() => socialLogin("google")}
+>
+  <Text style={globalStyles.socialButtonText}>구글 로그인</Text>
+</TouchableOpacity>
+
+<TouchableOpacity
+  style={[globalStyles.socialButton, { backgroundColor: '#00C300' }]}
+  onPress={() => socialLogin("naver")}
+>
+  <Text style={globalStyles.socialButtonText}>네이버 로그인</Text>
+</TouchableOpacity>
 
         <View style={globalStyles.linkContainer}>
           <TouchableOpacity onPress={() => router.push('/signup')}>

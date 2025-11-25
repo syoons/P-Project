@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router'; // expo-router 사용
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { globalStyles } from '../styles/globalStyles';
+import { registerUser } from '../api/services';
 
 export default function SignupScreen() {
   const router = useRouter(); // expo-router의 router 훅 사용
@@ -15,6 +16,12 @@ export default function SignupScreen() {
   const [birthDate, setBirthDate] = useState(''); // 생년월일 추가
 
   const handleSignup = async () => {
+    console.log("🔥 [SIGNUP] 시작");
+    console.log("📝 email:", email);
+  console.log("📝 username:", username);
+  console.log("📝 gender:", gender);
+  console.log("📝 birthDate:", birthDate);
+
     // 모든 정보가 입력되었는지 확인
     if (!email.trim() || !password.trim() || !confirmPassword.trim() || !username.trim() || !gender || !birthDate) {
       Alert.alert('알림', '모든 정보를 입력해주세요.');
@@ -41,33 +48,45 @@ export default function SignupScreen() {
 
     setLoading(true);
 
-    setTimeout(async () => {
-      try {
-        // 사용자 데이터 저장
-        const userData = {
-          id: Date.now(),
-          email: email.trim(),
-          username: username.trim(),
-          name: username.trim(),
-          joinDate: new Date().toLocaleDateString(),
-          profileImage: null,
-          gender,
-          birthDate,
-        };
+    try {
+      // 🔥 백엔드에 보낼 Request Body 구성
+      const payload = {
+        name: username.trim(),          // 이름
+        nickname: username.trim(),      // 닉네임
+        email: email.trim(),
+        pwd: password.trim(),           // 🔥 필드명 주의: pwd
+        gender,
+        birthDate,
+        provider: "local",
+        providerUserId: null,
+        profileImage: null,
+        role: "user",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        deletedAt: null
+      };
+       console.log("📦 [SIGNUP PAYLOAD]:", payload);
 
-        // AsyncStorage에 사용자 정보 저장
-        await AsyncStorage.setItem('user', JSON.stringify(userData));
+      // 🔥 실제 회원가입 API 호출
+      const data = await registerUser(payload);
+       console.log("⬅️ [SIGNUP SUCCESS RESPONSE]:", data);
 
-        // 회원가입 완료 후, 홈 화면으로 이동
-        Alert.alert('성공', '회원가입이 완료되었습니다!', [
-          { text: '확인', onPress: () => router.replace('/(tabs)') }, // expo-router로 경로 변경
-        ]);
-      } catch (error) {
-        Alert.alert('오류', '회원가입 처리 중 오류가 발생했습니다.');
-      } finally {
-        setLoading(false);
-      }
-    }, 1000);
+      // 🔥 응답 데이터 AsyncStorage에 저장 (로그인 유지)
+      await AsyncStorage.setItem("user", JSON.stringify(data));
+
+      Alert.alert("성공", "회원가입이 완료되었습니다!", [
+        { text: "확인", onPress: () => router.replace("../(tabs)") },
+      ]);
+    } catch (error: any) {
+      console.log("❌ [SIGNUP ERROR FRONT]", error);
+    console.log("❗ error.response?.status:", error.response?.status);
+    console.log("❗ error.response?.data:", error.response?.data);
+    console.log("❗ error.message:", error.message);
+      console.log(error.response?.data);
+      Alert.alert("오류", "회원가입 중 문제가 발생했습니다.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -159,10 +178,10 @@ export default function SignupScreen() {
         {/* 버튼들 사이에 간격 추가 */}
         <View style={{ marginTop: 20 }}>
           <TouchableOpacity 
-            style={[globalStyles.button, globalStyles.secondaryButton]} 
-            onPress={() => router.back()} // expo-router로 로그인 페이지로 돌아가기
-          >
-            <Text style={globalStyles.secondaryButtonText}>로그인으로 돌아가기</Text>
+         style={[globalStyles.button, globalStyles.secondaryButton]} 
+         onPress={() => router.push('/')} // 로그인 화면으로 이동
+              >
+           <Text style={globalStyles.secondaryButtonText}>로그인으로 돌아가기</Text>
           </TouchableOpacity>
         </View>
       </View>

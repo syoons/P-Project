@@ -1,9 +1,9 @@
-// app/friends/index.js - 친구 화면
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, Modal } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Modal, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { globalStyles, colors } from '../../styles/globalStyles';
+import { getFriends, getFriendRequests, sendFriendRequest, acceptFriendRequest, rejectFriendRequest, removeFriend } from '../../api/services';
 
 export default function FriendsScreen() {
   const router = useRouter();
@@ -20,324 +20,201 @@ export default function FriendsScreen() {
 
   const loadData = async () => {
     try {
-      const [friendsData, requestsData] = await Promise.all([
-        AsyncStorage.getItem('friends'),
-        AsyncStorage.getItem('friendRequests')
-      ]);
-
-      if (friendsData) setFriends(JSON.parse(friendsData));
-      if (requestsData) setFriendRequests(JSON.parse(requestsData));
+      const userData = await AsyncStorage.getItem('user');
+      if (userData) {
+        const user = JSON.parse(userData);
+        // API 호출 - 친구 목록과 친구 요청 목록 가져오기
+        const friendsData = await getFriends(user.id);
+        const requestsData = await getFriendRequests(user.id);
+        
+        setFriends(friendsData);
+        setFriendRequests(requestsData);
+      }
     } catch (error) {
       console.error('친구 데이터 로드 실패:', error);
+      Alert.alert("오류", "데이터 로드 실패");
     }
   };
 
-  const saveFriends = async (newFriends) => {
-    try {
-      await AsyncStorage.setItem('friends', JSON.stringify(newFriends));
-      setFriends(newFriends);
-    } catch (error) {
-      console.error('친구 저장 실패:', error);
-    }
-  };
-
-  const saveRequests = async (newRequests) => {
-    try {
-      await AsyncStorage.setItem('friendRequests', JSON.stringify(newRequests));
-      setFriendRequests(newRequests);
-    } catch (error) {
-      console.error('요청 저장 실패:', error);
-    }
-  };
-
-  const addFriend = () => {
+  // 친구 추가 요청
+  const addFriend = async () => {
     if (!newFriendUsername.trim()) {
       Alert.alert('알림', '친구의 닉네임을 입력해주세요.');
       return;
     }
 
-    // 실제로는 서버에 친구 요청을 보냄
-    Alert.alert('완료', `${newFriendUsername}님께 친구 요청을 보냈습니다.`);
-    setNewFriendUsername('');
-    setShowAddModal(false);
-
-    // 데모용으로 요청 목록에 추가
-    const newRequest = {
-      id: Date.now(),
-      username: newFriendUsername.trim(),
-      date: new Date().toLocaleDateString(),
-      status: 'pending'
-    };
-    saveRequests([...friendRequests, newRequest]);
-  };
-
-  const removeFriend = (friendId) => {
-    Alert.alert(
-      '친구 삭제',
-      '정말 이 친구를 삭제하시겠습니까?',
-      [
-        { text: '취소', style: 'cancel' },
-        { 
-          text: '삭제', 
-          onPress: () => saveFriends(friends.filter(f => f.id !== friendId)),
-          style: 'destructive' 
-        }
-      ]
-    );
-  };
-
-  const acceptRequest = (requestId) => {
-    const request = friendRequests.find(r => r.id === requestId);
-    if (request) {
-      const newFriend = {
-        id: Date.now(),
-        username: request.username,
-        addedDate: new Date().toLocaleDateString(),
-        status: 'active',
-        lastActivity: '방금 전'
-      };
-      
-      saveFriends([...friends, newFriend]);
-      saveRequests(friendRequests.filter(r => r.id !== requestId));
-      Alert.alert('완료', `${request.username}님과 친구가 되었습니다!`);
+    try {
+      const userData = await AsyncStorage.getItem('user');
+      const user = JSON.parse(userData);
+      await sendFriendRequest(user.id, newFriendUsername);
+      Alert.alert('완료', `${newFriendUsername}님께 친구 요청을 보냈습니다.`);
+      setNewFriendUsername('');
+      setShowAddModal(false);
+      loadData(); // 친구 목록과 요청 목록을 다시 불러오기
+    } catch (error) {
+      console.error('친구 요청 보내기 실패:', error);
+      Alert.alert('오류', '친구 요청 보내기 실패');
     }
   };
 
-  const rejectRequest = (requestId) => {
-    saveRequests(friendRequests.filter(r => r.id !== requestId));
+  // 친구 삭제
+  const removeFriendHandler = async (friendId) => {
+    try {
+      const userData = await AsyncStorage.getItem('user');
+      const user = JSON.parse(userData);
+      await removeFriend(user.id, friendId); // 친구 삭제 API
+      loadData(); // 친구 목록 갱신
+      Alert.alert('완료', '친구가 삭제되었습니다.');
+    } catch (error) {
+      console.error('친구 삭제 실패:', error);
+      Alert.alert('오류', '친구 삭제 실패');
+    }
   };
 
-  const filteredFriends = friends.filter(friend => 
-    friend.username.toLowerCase().includes(searchText.toLowerCase())
-  );
+  // 친구 요청 수락
+  const acceptRequestHandler = async (requestId) => {
+    try {
+      const request = friendRequests.find(r => r.id === requestId);
+      if (request) {
+        const userData = await AsyncStorage.getItem('user');
+        const user = JSON.parse(userData);
+        await acceptFriendRequest(user.id, request.id);
+        loadData(); // 친구 목록과 요청 목록 갱신
+        Alert.alert('완료', `${request.username}님과 친구가 되었습니다!`);
+      }
+    } catch (error) {
+      console.error('친구 요청 수락 실패:', error);
+      Alert.alert('오류', '친구 요청 수락 실패');
+    }
+  };
 
-  const tabs = [
-    { key: 'list', label: '친구 목록', count: friends.length },
-    { key: 'requests', label: '요청', count: friendRequests.length }
-  ];
+  // 친구 요청 거절
+  const rejectRequestHandler = async (requestId) => {
+    try {
+      const userData = await AsyncStorage.getItem('user');
+      const user = JSON.parse(userData);
+      await rejectFriendRequest(user.id, requestId);
+      loadData(); // 친구 요청 목록 갱신
+      Alert.alert('완료', '친구 요청을 거절했습니다.');
+    } catch (error) {
+      console.error('친구 요청 거절 실패:', error);
+      Alert.alert('오류', '친구 요청 거절 실패');
+    }
+  };
 
-  return (
-    <View style={globalStyles.screen}>
-      {/* 헤더 */}
-      <View style={globalStyles.header}>
-        <Text style={globalStyles.title}>친구</Text>
-      </View>
-
-      {/* 탭 헤더 */}
-      <View style={styles.tabHeader}>
-        {tabs.map(tab => (
-          <TouchableOpacity
-            key={tab.key}
-            style={[styles.tab, activeTab === tab.key && styles.activeTab]}
-            onPress={() => setActiveTab(tab.key)}
-          >
-            <Text style={[styles.tabText, activeTab === tab.key && styles.activeTabText]}>
-              {tab.label} ({tab.count})
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {activeTab === 'list' ? (
-        <FriendListTab 
-          friends={filteredFriends}
-          searchText={searchText}
-          setSearchText={setSearchText}
-          removeFriend={removeFriend}
-          setShowAddModal={setShowAddModal}
-        />
-      ) : (
-        <FriendRequestsTab 
-          friendRequests={friendRequests}
-          acceptRequest={acceptRequest}
-          rejectRequest={rejectRequest}
-        />
-      )}
-
-      {/* 친구 추가 모달 */}
-      <Modal
-        visible={showAddModal}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setShowAddModal(false)}
-      >
-        <View style={globalStyles.modalOverlay}>
-          <View style={globalStyles.modalContent}>
-            <Text style={globalStyles.modalTitle}>친구 추가</Text>
-            <TextInput
-              style={globalStyles.textInput}
-              value={newFriendUsername}
-              onChangeText={setNewFriendUsername}
-              placeholder="친구의 닉네임을 입력하세요"
-            />
-            <View style={globalStyles.modalButtons}>
-              <TouchableOpacity 
-                style={[globalStyles.button, globalStyles.primaryButton, globalStyles.modalButton]}
-                onPress={addFriend}
-              >
-                <Text style={globalStyles.buttonText}>요청 보내기</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={[globalStyles.button, globalStyles.secondaryButton, globalStyles.modalButton]}
-                onPress={() => setShowAddModal(false)}
-              >
-                <Text style={globalStyles.secondaryButtonText}>취소</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-    </View>
-  );
-}
-
-// 친구 목록 탭 컴포넌트
-const FriendListTab = ({ friends, searchText, setSearchText, removeFriend, setShowAddModal }) => {
-  const router = useRouter();
-
-  return (
-    <>
-      {/* 검색 및 추가 */}
-      <View style={styles.friendActions}>
-        <View style={styles.searchContainer}>
+  // 친구 목록 탭
+  const FriendListTab = () => {
+    return (
+      <View>
+        <View style={styles.friendActions}>
           <TextInput
             style={globalStyles.searchInput}
             placeholder="친구 검색..."
             value={searchText}
             onChangeText={setSearchText}
           />
+          <TouchableOpacity onPress={() => setShowAddModal(true)} style={styles.addButton}>
+            <Text style={styles.addButtonText}>+ 추가</Text>
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity 
-          style={styles.addButton}
-          onPress={() => setShowAddModal(true)}
-        >
-          <Text style={styles.addButtonText}>+ 추가</Text>
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView style={globalStyles.scrollView}>
-        {friends.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyIcon}>👥</Text>
-            <Text style={globalStyles.emptyText}>
-              {searchText ? '검색 결과가 없습니다.' : '아직 친구가 없습니다.'}
-            </Text>
-
-          </View>
-        ) : (
-          friends.map((friend, index) => (
-            <View key={index} style={styles.friendCard}>
-              <View style={styles.friendInfo}>
-                <View style={styles.friendAvatar}>
-                  <Text style={styles.friendAvatarText}>👤</Text>
+        <ScrollView style={globalStyles.scrollView}>
+          {friends.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyIcon}>👥</Text>
+              <Text style={globalStyles.emptyText}>
+                {searchText ? '검색 결과가 없습니다.' : '아직 친구가 없습니다.'}
+              </Text>
+            </View>
+          ) : (
+            friends.map((friend) => (
+              <View key={friend.id} style={styles.friendCard}>
+                <View style={styles.friendInfo}>
+                  <Text>{friend.username}</Text>
                 </View>
-                <View style={styles.friendDetails}>
-                  <Text style={styles.friendName}>@{friend.username}</Text>
-                  <Text style={styles.friendActivity}>최근 활동: {friend.lastActivity || '2일 전'}</Text>
-                </View>
-              </View>
-              <View style={styles.friendActions}>
-                <TouchableOpacity 
-                  style={[globalStyles.button, globalStyles.dangerButton, globalStyles.smallButton]}
-                  onPress={() => removeFriend(friend.id)}
-                >
-                  <Text style={globalStyles.buttonText}>삭제</Text>
+                <TouchableOpacity onPress={() => removeFriendHandler(friend.id)}>
+                  <Text>삭제</Text>
                 </TouchableOpacity>
               </View>
+            ))
+          )}
+        </ScrollView>
+      </View>
+    );
+  };
+
+  // 친구 요청 탭
+  const FriendRequestsTab = () => {
+    return (
+      <ScrollView style={globalStyles.scrollView}>
+        {friendRequests.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyIcon}>📬</Text>
+            <Text style={globalStyles.emptyText}>새로운 요청이 없습니다.</Text>
+          </View>
+        ) : (
+          friendRequests.map((request) => (
+            <View key={request.id} style={styles.requestCard}>
+              <Text>{request.username}</Text>
+              <TouchableOpacity onPress={() => acceptRequestHandler(request.id)}>
+                <Text>수락</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => rejectRequestHandler(request.id)}>
+                <Text>거절</Text>
+              </TouchableOpacity>
             </View>
           ))
         )}
       </ScrollView>
-    </>
-  );
-};
+    );
+  };
 
-// 친구 요청 탭 컴포넌트
-const FriendRequestsTab = ({ friendRequests, acceptRequest, rejectRequest }) => {
   return (
-    <ScrollView style={globalStyles.scrollView}>
-      {friendRequests.length === 0 ? (
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyIcon}>📬</Text>
-          <Text style={globalStyles.emptyText}>새로운 요청이 없습니다.</Text>
+    <View style={globalStyles.screen}>
+      <View style={globalStyles.header}>
+        <Text style={globalStyles.title}>친구</Text>
+      </View>
+      <View style={styles.tabHeader}>
+        <TouchableOpacity onPress={() => setActiveTab('list')} style={[styles.tab, activeTab === 'list' && styles.activeTab]}>
+          <Text style={styles.tabText}>친구 목록</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => setActiveTab('requests')} style={[styles.tab, activeTab === 'requests' && styles.activeTab]}>
+          <Text style={styles.tabText}>친구 요청</Text>
+        </TouchableOpacity>
+      </View>
+      {activeTab === 'list' ? <FriendListTab /> : <FriendRequestsTab />}
+      <Modal visible={showAddModal}>
+        <View>
+          <TextInput
+            placeholder="친구의 닉네임을 입력하세요"
+            value={newFriendUsername}
+            onChangeText={setNewFriendUsername}
+          />
+          <TouchableOpacity onPress={addFriend}>
+            <Text>요청 보내기</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setShowAddModal(false)}>
+            <Text>취소</Text>
+          </TouchableOpacity>
         </View>
-      ) : (
-        friendRequests.map((request, index) => (
-          <View key={index} style={styles.requestCard}>
-            <View style={styles.requestInfo}>
-              <View style={styles.friendAvatar}>
-                <Text style={styles.friendAvatarText}>👤</Text>
-              </View>
-              <View style={styles.requestDetails}>
-                <Text style={styles.requestName}>@{request.username}</Text>
-                <Text style={styles.requestDate}>{request.date}</Text>
-              </View>
-            </View>
-            <View style={styles.requestActions}>
-              <TouchableOpacity 
-                style={[globalStyles.button, globalStyles.primaryButton, globalStyles.smallButton]}
-                onPress={() => acceptRequest(request.id)}
-              >
-                <Text style={globalStyles.buttonText}>수락</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={[globalStyles.button, globalStyles.secondaryButton, globalStyles.smallButton]}
-                onPress={() => rejectRequest(request.id)}
-              >
-                <Text style={globalStyles.secondaryButtonText}>거절</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        ))
-      )}
-    </ScrollView>
+      </Modal>
+    </View>
   );
-};
+}
 
 const styles = {
-  tabHeader: {
-    flexDirection: 'row',
-    backgroundColor: colors.white,
-    borderRadius: 8,
-    marginBottom: 20,
-    overflow: 'hidden',
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 12,
-    alignItems: 'center',
-    backgroundColor: colors.light,
-  },
-  activeTab: {
-    backgroundColor: colors.primary,
-  },
-  tabText: {
-    fontSize: 14,
-    color: colors.gray,
-  },
-  activeTabText: {
-    color: colors.white,
-    fontWeight: '600',
-  },
   friendActions: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 15,
     gap: 10,
-  },
-  searchContainer: {
-    flex: 1,
+    marginBottom: 15,
   },
   addButton: {
     backgroundColor: colors.primary,
-    paddingHorizontal: 15,
     paddingVertical: 12,
+    paddingHorizontal: 15,
     borderRadius: 25,
   },
   addButtonText: {
     color: colors.white,
-    fontSize: 14,
-    fontWeight: '600',
   },
   emptyState: {
     alignItems: 'center',
@@ -355,46 +232,28 @@ const styles = {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
   },
   friendInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
   },
-  friendAvatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: colors.light,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  friendAvatarText: {
-    fontSize: 24,
-  },
-  friendDetails: {
-    flex: 1,
-  },
-  friendName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: colors.dark,
-    marginBottom: 4,
-  },
-  friendActivity: {
-    fontSize: 12,
-    color: colors.gray,
-    marginBottom: 2,
-  },
-  friendActions: {
+  tabHeader: {
     flexDirection: 'row',
-    gap: 8,
+    marginBottom: 20,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+    backgroundColor: colors.light,
+  },
+  activeTab: {
+    backgroundColor: colors.primary,
+  },
+  tabText: {
+    fontSize: 14,
+    color: colors.dark,
   },
   requestCard: {
     backgroundColor: colors.white,
@@ -404,32 +263,5 @@ const styles = {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
-  },
-  requestInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  requestDetails: {
-    flex: 1,
-  },
-  requestName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: colors.dark,
-    marginBottom: 4,
-  },
-  requestDate: {
-    fontSize: 12,
-    color: colors.gray,
-  },
-  requestActions: {
-    flexDirection: 'row',
-    gap: 8,
   },
 };
