@@ -5,10 +5,8 @@ import com.p_project.message.feedback.FeedbackResponseDTO;
 import com.p_project.message.finalize.FinalizeRequestDTO;
 import com.p_project.message.finalize.FinalizeResponseDTO;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -35,5 +33,10 @@ public class WritingController {
     @PostMapping("/feedback")
     public FeedbackResponseDTO feedback(@RequestBody FeedbackRequestDTO request) {
         return writingService.handleFeedback(request);
+    }
+
+    @PostMapping("/{id}/complete")
+    public ResponseEntity<?> complete(@PathVariable Long id) {
+        return ResponseEntity.ok(writingService.complete(id));
     }
 }

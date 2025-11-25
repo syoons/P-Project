@@ -21,4 +21,9 @@ public class BookController {
         List<DiaryDTO> reports = bookService.getAllReports();
         return ResponseEntity.ok(reports);
     }
+
+    @PostMapping("/{id}/complete")
+    public ResponseEntity<?> complete(@PathVariable Long id) {
+        return ResponseEntity.ok(bookService.complete(id));
+    }
 }
