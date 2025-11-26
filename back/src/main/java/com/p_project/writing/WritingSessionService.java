@@ -107,8 +107,10 @@ public class WritingSessionService {
         );
 
         // 3) totalQuestions 계산
-        int totalQuestions = 5 + session.getExtraQuestions();
-
+        int totalQuestions = 5;
+        if(session.getExtraQuestions() != null) {
+            totalQuestions = totalQuestions + session.getExtraQuestions();
+        }
         // 4) 마지막 질문이면 finalize 단계로 안내
         if (currentIndex+1 >= totalQuestions) {
             return AnswerResponseDTO.builder()

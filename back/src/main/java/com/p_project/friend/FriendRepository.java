@@ -58,6 +58,7 @@ public interface FriendRepository extends JpaRepository<FriendEntity, Long> {
     FROM friends
     WHERE from_user_id = :toUserId
       AND to_user_id = :fromUserId
+      AND deleted_at is null
     """, nativeQuery = true)
     Integer existsFriendship(@Param("fromUserId") Long fromUserId,
                              @Param("toUserId") Long toUserId);
