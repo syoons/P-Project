@@ -1,15 +1,15 @@
 package com.p_project.writing;
 
-import jakarta.transaction.Transactional;
 import com.p_project.AI.AiFinalizeResponseDTO;
 import com.p_project.AI.AiResponseDTO;
 import com.p_project.AI.AiService;
 import com.p_project.message.MessageRepository;
 import com.p_project.message.MessagesEntity;
 import com.p_project.message.feedback.FeedbackRequestDTO;
-import com.p_project.message.feedback.FeedbackResponseDTO;
+import com.p_project.message.feedback.FeedbackResponDTO;
 import com.p_project.message.finalize.FinalizeRequestDTO;
 import com.p_project.message.finalize.FinalizeResponseDTO;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -112,7 +112,7 @@ public class WritingSessionService {
             totalQuestions = totalQuestions + session.getExtraQuestions();
         }
         // 4) 마지막 질문이면 finalize 단계로 안내
-        if (currentIndex+1 >= totalQuestions) {
+        if (currentIndex >= totalQuestions) {
             return AnswerResponseDTO.builder()
                     .nextQuestion(null)
                     .finalize(true)
@@ -186,7 +186,7 @@ public class WritingSessionService {
                 .build();
     }
 
-    public FeedbackResponseDTO handleFeedback(FeedbackRequestDTO request) {
+    public FeedbackResponDTO handleFeedback(FeedbackRequestDTO request) {
 
         WritingSessionEntity session = writingSessionRepository.findById(request.getSessionId())
                 .orElseThrow(() -> new RuntimeException("Session not found"));
@@ -195,16 +195,34 @@ public class WritingSessionService {
             session.setStatus(WritingSessionEntity.WritingStatus.COMPLETE);
             writingSessionRepository.save(session);
 
-            return FeedbackResponseDTO.builder()
+            return FeedbackResponDTO.builder()
                     .done(true)
                     .build();
         }
 
-        // ❗ 추가 질문 개수만 저장하고, 질문은 answer API에서 생성함
+        // 추가 질문 개수만 저장하고, AI를 통해 질문을 생성하고 리턴
         session.setExtraQuestions(request.getAddN());
         writingSessionRepository.save(session);
 
-        return FeedbackResponseDTO.builder()
+        // 모든 메시지 가져오고
+        List<MessagesEntity> allMessages =
+                messageRepository.findBySessionIdOrderByCreatedAtAsc(request.getSessionId());
+
+        // 질문 받아옴
+        AiResponseDTO ai = aiService.generateNextQuestion(allMessages);
+
+        // AI 질문 저장
+        messageRepository.save(
+                MessagesEntity.builder()
+                        .sessionId(request.getSessionId())
+                        .role(MessagesEntity.MessageRole.AI)
+                        .content(ai.getNextQuestion())
+                        .build()
+        );
+
+        return FeedbackResponDTO.builder()
+                .sessionId(request.getSessionId())
+                .question(ai.getNextQuestion())
                 .done(false)
                 .build();
     }
