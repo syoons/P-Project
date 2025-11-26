@@ -58,8 +58,11 @@ public class FriendService {
     }
 
     @Transactional // 하나의 트랜잭션으로 묶어서 실행
-    public void sendFriendRequest(Long fromUserId, String email) {
+    public FriendSimpleDTO sendFriendRequest(Long fromUserId, String email) {
         friendRepository.sendFriendRequest(fromUserId, email);
+        Long toUserId = userService.findUserIdByEmail(email);
+
+        return new FriendSimpleDTO(toUserId, fromUserId);
     }
 
     @Transactional
