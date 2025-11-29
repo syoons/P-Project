@@ -73,11 +73,11 @@ public class SecurityConfig {
         // JWT 필터 추가
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
-        // OAuth2 소셜 로그인 설정
+        // OAuth2 소셜 로그인 설정 (JSON 응답이므로 리다이렉트 없이 성공 응답으로 처리)
         http.oauth2Login(oauth2 -> oauth2
                 .loginPage("/login")
                 .userInfoEndpoint(u -> u.userService(customOAuth2UserService))
-                .successHandler(customSuccessHandler)
+                .successHandler(customSuccessHandler) // JSON 응답하도록 변경됨
                 .failureHandler(customOAuth2FailureHandler)
         );
 
@@ -104,11 +104,13 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(List.of("http://localhost:8080")); // Swagger UI origin 허용
+        configuration.setAllowedOrigins(List.of("http://localhost:8080"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
-        configuration.setExposedHeaders(List.of("Authorization"));
+
+        // 🌟 응답 헤더에 Authorization (Access Token 재발급 시) 와 X-Refresh-Token (옵션) 추가
+        configuration.setExposedHeaders(List.of("Authorization", "X-Refresh-Token"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

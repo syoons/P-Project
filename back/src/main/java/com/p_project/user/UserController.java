@@ -45,20 +45,8 @@ public class UserController {
 
     //일반회원 로그인
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestParam String email,
-                                   @RequestParam String password,
-                                   HttpServletResponse response) {
-        return userService.login(email, password, response);
-    }
-
-
-    //로그인 페이지 반환
-    @GetMapping("/login")
-    public ResponseEntity<Map<String, String>> loginCheck() {
-
-        Map<String, String> response = userService.responseMessage("로그인 API.");
-
-        return ResponseEntity.ok(response);
+    public ResponseEntity<?> login(@RequestBody UserDTO userDTO) {
+        return userService.login(userDTO);
     }
 
     @PostMapping("/reset-password")
