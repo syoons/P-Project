@@ -83,4 +83,6 @@ public class WritingSessionEntity {
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
+
+
 }

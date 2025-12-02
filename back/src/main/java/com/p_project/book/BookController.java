@@ -26,4 +26,12 @@ public class BookController {
     public ResponseEntity<?> complete(@PathVariable Long id) {
         return ResponseEntity.ok(bookService.complete(id));
     }
+
+    @GetMapping("/me/books")
+    public ResponseEntity<List<BookDTO>> getMyBookSessionList() {
+
+        List<BookDTO> reviewedBooks = bookService.getMyBookSessions();
+
+        return ResponseEntity.ok(reviewedBooks);
+    }
 }
