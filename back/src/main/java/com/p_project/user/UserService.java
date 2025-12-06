@@ -213,5 +213,9 @@ public class UserService {
     }
 
 
+    public Optional<UserEntity> findById(Long userId){
+
+        return userRepository.findById(userId);
+    }
 
 }

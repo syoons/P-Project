@@ -1,13 +1,12 @@
 package com.p_project.writing;
 
+import com.p_project.jwt.TokenDecodeService;
 import com.p_project.message.feedback.FeedbackRequestDTO;
 import com.p_project.message.feedback.FeedbackResponDTO;
 import com.p_project.message.finalize.FinalizeRequestDTO;
 import com.p_project.message.finalize.FinalizeResponseDTO;
-import com.p_project.oauth2.CustomOAuth2User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -16,11 +15,11 @@ import org.springframework.web.bind.annotation.*;
 public class WritingController {
 
     private final WritingSessionService writingService;
+    private final TokenDecodeService tokenDecodeService;
 
     @PostMapping("/start")
-    public StartResponseDTO start(Authentication auth, @RequestBody StartRequestDTO request) {
-        CustomOAuth2User principal = (CustomOAuth2User) auth.getPrincipal();
-        request.setUserId(principal.getUserId());
+    public StartResponseDTO start(@RequestBody StartRequestDTO request) {
+        request.setUserId((Long) tokenDecodeService.decode(request.getToken()).get("userId"));
         return writingService.startWriting(request);
     }
 

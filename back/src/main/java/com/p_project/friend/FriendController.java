@@ -1,13 +1,13 @@
 package com.p_project.friend;
 
 import com.p_project.calendar.CalendarDTO;
-import com.p_project.oauth2.CustomOAuth2User;
+import com.p_project.jwt.TokenDecodeService;
+import com.p_project.jwt.TokenRequest;
 import com.p_project.user.UserDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -20,6 +20,7 @@ import java.util.List;
 public class FriendController {
 
     private final FriendService friendService;
+    private final TokenDecodeService tokenDecodeService;
 
     @PostMapping("/add")
     public ResponseEntity<Void> addFriend(@RequestBody FriendDTO friendDTO){ // TODO: 들어오는 리퀘스트 수정 필요
@@ -30,57 +31,57 @@ public class FriendController {
     }
 
     @PostMapping("/accept")
-    public ResponseEntity<Integer> acceptFriend(Authentication auth,
+    public ResponseEntity<Integer> acceptFriend(@RequestBody TokenRequest request,
                                                 @RequestParam Long fromUserId) {
-        CustomOAuth2User principal = (CustomOAuth2User) auth.getPrincipal();
-        friendService.acceptFriend(fromUserId, principal.getUserId());
+        friendService.acceptFriend(fromUserId,
+                (Long) tokenDecodeService.decode(request.getToken()).get("userId"));
         return ResponseEntity.ok(200);
     }
 
-    @GetMapping("/list")
-    public ResponseEntity<List<UserDTO>> listFriendRequest(Authentication auth){
+    @PostMapping("/list")
+    public ResponseEntity<List<UserDTO>> listFriendRequest(@RequestBody TokenRequest request){
         log.info("in FriendController: aceptFriendRequest");
 
-        CustomOAuth2User principal = (CustomOAuth2User) auth.getPrincipal();
-        List<UserDTO> users = friendService.getMutualFriends(principal.getUserId());
+        List<UserDTO> users = friendService.getMutualFriends(
+                (Long) tokenDecodeService.decode(request.getToken()).get("userId"));
         return ResponseEntity.ok(users);
     }
 
-    @GetMapping("/requests/list")
-    public ResponseEntity<List<UserDTO>> getPendingRequests(Authentication auth) {
-        CustomOAuth2User principal = (CustomOAuth2User) auth.getPrincipal();
-        List<UserDTO> requests = friendService.getPendingRequests(principal.getUserId());
+    @PostMapping("/requests/list")
+    public ResponseEntity<List<UserDTO>> getPendingRequests(@RequestBody TokenRequest request) {
+        List<UserDTO> requests = friendService.getPendingRequests(
+                (Long) tokenDecodeService.decode(request.getToken()).get("userId"));
 
         return ResponseEntity.ok(requests);
     }
 
     @PostMapping("/request")
-    public ResponseEntity<FriendSimpleDTO> sendFriendRequest(Authentication auth,
+    public ResponseEntity<FriendSimpleDTO> sendFriendRequest(@RequestBody TokenRequest request,
             @RequestParam String email) {
 
-        CustomOAuth2User principal = (CustomOAuth2User) auth.getPrincipal();
-        FriendSimpleDTO friendSimpleDTO = friendService.sendFriendRequest(principal.getUserId(), email);
+        FriendSimpleDTO friendSimpleDTO = friendService.sendFriendRequest(
+                (Long) tokenDecodeService.decode(request.getToken()).get("userId"), email);
         return ResponseEntity.ok(friendSimpleDTO);
     }
 
     @PostMapping("/request/delete")
-    public ResponseEntity<Integer> deleteFriendRequest(Authentication auth,
+    public ResponseEntity<Integer> deleteFriendRequest(@RequestBody TokenRequest request,
             @RequestParam Long fromUserId) {
 
-        CustomOAuth2User principal = (CustomOAuth2User) auth.getPrincipal();
-        friendService.deleteFriendRequest(fromUserId, principal.getUserId());
+        friendService.deleteFriendRequest(fromUserId,
+                (Long) tokenDecodeService.decode(request.getToken()).get("userId"));
 
         return ResponseEntity.ok(200);
     }
 
-    @GetMapping("/calendar")
+    @PostMapping("/calendar")
     public ResponseEntity<CalendarDTO> getFriendCalendarSummary(
-            Authentication auth,
+            @RequestBody TokenRequest request,
             @RequestParam Long friendId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
     ) {
-        CustomOAuth2User principal = (CustomOAuth2User) auth.getPrincipal();
-        CalendarDTO calendar = friendService.getFriendCalendarSummary(principal.getUserId(), friendId, date);
+        CalendarDTO calendar = friendService.getFriendCalendarSummary(
+                (Long) tokenDecodeService.decode(request.getToken()).get("userId"), friendId, date);
         return ResponseEntity.ok(calendar);
     }
 }

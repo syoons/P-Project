@@ -1,18 +1,11 @@
 package com.p_project.home;
 
-import com.p_project.oauth2.CustomOAuth2User;
-import com.p_project.user.UserEntity;
-import com.p_project.user.UserRepository;
+import com.p_project.jwt.TokenDecodeService;
+import com.p_project.jwt.TokenRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Optional;
+import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
@@ -21,13 +14,13 @@ import java.util.Optional;
 public class HomeController {
 
     private final HomeService homeService;
-    private final UserRepository userRepository;
+    private final TokenDecodeService tokenDecodeService;
 
-    @GetMapping
-    public ResponseEntity<HomeDTO> getHome(Authentication auth){
+    @PostMapping
+    public ResponseEntity<HomeDTO> getHome(@RequestBody TokenRequest request){
         log.info("in HomeController: getHome");
-        CustomOAuth2User principal = (CustomOAuth2User) auth.getPrincipal();
-        HomeDTO response = homeService.getHome(principal.getUserId());
+        HomeDTO response = homeService.getHome(
+                (Long) tokenDecodeService.decode(request.getToken()).get("userId"));
 
         return ResponseEntity.ok(response);
     }
@@ -40,21 +33,12 @@ public class HomeController {
         return "main route";
     }
 
-    @GetMapping("/test")
+    @PostMapping("/test")
     @ResponseBody
-    public ResponseEntity<Long> testAPI(Authentication authentication){
+    public ResponseEntity<Long> testAPI(@RequestBody TokenRequest request){
         log.info(">>> [Controller] 진입 성공");
-        log.info("token = {}", authentication.getPrincipal());
 
-        CustomOAuth2User customUser = (CustomOAuth2User) authentication.getPrincipal();
-        String email = customUser.getEmail();
-
-        Optional<UserEntity> userDTO = userRepository.findByEmail(email);
-
-        Long userId = userDTO.get().getId();
-        log.info(String.valueOf(userId));
-
-        return ResponseEntity.ok(userId);
+        return ResponseEntity.ok((Long) tokenDecodeService.decode(request.getToken()).get("userId"));
     }
 
 
