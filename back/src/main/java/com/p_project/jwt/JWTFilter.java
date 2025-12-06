@@ -41,15 +41,36 @@ public class JWTFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         String uri = request.getRequestURI();
+        String method = request.getMethod();
+
+        String authHeader = request.getHeader("Authorization");
+        log.debug("[JWTFilter] Authorization Header: {}", authHeader);
+
+
+        log.debug("[JWTFilter] Incoming Request → METHOD: {}, URI: {}", method, uri);
+
+
+        //로그인 문제로 추가
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            log.debug("[JWTFilter] Skip JWT Filter → OPTIONS Preflight Request");
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+
 
         if (uri.startsWith("/oauth2") ||
                 uri.startsWith("/login/oauth2") ||
                 uri.startsWith("/login") ||
                 uri.startsWith("/error") ||
+                uri.startsWith("/api/users/login") ||
+                uri.startsWith("/api/users/register") ||
                 uri.startsWith("/favicon") ||
                 uri.startsWith("/swagger") ||
                 uri.startsWith("/v3") ||
                 uri.startsWith("/webjars")) {
+
+            log.debug("[JWTFilter] Skip JWT Filter → Whitelisted URL");
 
             filterChain.doFilter(request, response);
             return;

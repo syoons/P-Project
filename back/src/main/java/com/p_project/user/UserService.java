@@ -105,13 +105,15 @@ public class UserService {
             String email = userDTO.getEmail();
             String password = userDTO.getPwd();
 
+            log.debug("[JWTFilter] Incoming Request → email: {}, password: {}", email, password);
+
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(email, password)
             );
 
             Optional<UserEntity> user = userRepository.findByEmail(email);
 
-            String role = authentication.getAuthorities().iterator().next().getAuthority();
+            String role = authentication.getAuthorities().iterator().next().getAuthority().toUpperCase();
             Long userId = user.get().getId();
 
             // 2. Access/Refresh Token 생성 (기존 로직 유지)
@@ -119,7 +121,7 @@ public class UserService {
             String refreshToken = jwtUtil.createJwt(userId, email, role, 1000L * 60 * 60 * 24 * 14); // 14일
 
 
-            // 4. JWT를 JSON 응답 본문으로 반환 (핵심 변경)
+            // 4. JWT를 JSON 응답 본문으로 반환
             LoginResponseDTO responseDto = new LoginResponseDTO(
                     accessToken,
                     refreshToken,
@@ -209,5 +211,7 @@ public class UserService {
             Optional<UserEntity> userEntity  = userRepository.findByEmail(email);
         return userEntity.get().getId();
     }
+
+
 
 }
