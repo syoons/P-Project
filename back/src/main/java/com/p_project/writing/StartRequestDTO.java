@@ -8,5 +8,4 @@ import lombok.Setter;
 public class StartRequestDTO {
     private WritingSessionEntity.Type type; // DIARY or BOOK
     private Long userId;
-    private String token;
 }

@@ -13,7 +13,6 @@ public class MyPageUpdateDTO {
     private String email;
     private String nickName;
     private String gender;
-    private String token;
 
 
 }
