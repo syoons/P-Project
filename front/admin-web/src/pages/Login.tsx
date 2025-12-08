@@ -25,18 +25,18 @@ const Login = () => {
                     <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center text-white mb-4 shadow-md">
                         <BookOpen size={24} />
                     </div>
-                    <h1 className="text-2xl font-bold text-primary">ReadAdmin</h1>
-                    <p className="text-muted">관리자 계정으로 로그인하세요</p>
+                    <h1 className="text-2xl font-bold text-primary">AdminPage</h1>
+                    <p className="text-muted">관리자 계정으로 로그인</p>
                 </div>
 
-                <form onSubmit={handleLogin} className="flex flex-col gap-4">
+                <form onSubmit={handleLogin} className="flex flex-col gap-4" style={{ marginTop: '1.5rem' }}>
                     <div>
                         <label className="block text-sm font-medium text-muted mb-1">아이디</label>
-                        <div className="relative">
-                            <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" size={18} />
+                        <div className="flex items-center gap-2">
+                            <User className="text-muted" size={20} />
                             <input
                                 type="text"
-                                className="input-field pl-10"
+                                className="input-field flex-1"
                                 placeholder="admin"
                                 value={id}
                                 onChange={(e) => setId(e.target.value)}
@@ -46,11 +46,11 @@ const Login = () => {
 
                     <div>
                         <label className="block text-sm font-medium text-muted mb-1">비밀번호</label>
-                        <div className="relative">
-                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" size={18} />
+                        <div className="flex items-center gap-2">
+                            <Lock className="text-muted" size={20} />
                             <input
                                 type="password"
-                                className="input-field pl-10"
+                                className="input-field flex-1"
                                 placeholder="1234"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
