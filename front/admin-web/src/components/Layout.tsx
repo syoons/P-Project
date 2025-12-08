@@ -22,7 +22,7 @@ const Layout = () => {
 
     return (
         <div className="flex h-screen bg-main text-main overflow-hidden">
-            {/* Sidebar */}
+            {/* 사이드바 */}
             <aside className="w-64 glass-panel flex flex-col h-full border-r border-border z-20">
                 <div className="p-6 flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center font-bold text-white shadow-md">
@@ -63,12 +63,12 @@ const Layout = () => {
                 </div>
             </aside>
 
-            {/* Main Content */}
+            {/* 메인 콘텐츠 */}
             <main className="flex-1 flex flex-col overflow-hidden relative bg-main w-full">
-                {/* Header */}
+                {/* 헤더 */}
                 <header className="h-16 glass-panel border-b border-border flex items-center justify-between px-8 z-10 sticky top-0 w-full">
                     <div className="flex items-center gap-4 text-muted">
-                        {/* Header content can go here if needed */}
+                        {/* 필요시 헤더 콘텐츠를 여기에 추가할 수 있습니다 */}
                     </div>
 
                     <div className="flex items-center gap-6">
@@ -85,7 +85,7 @@ const Layout = () => {
                     </div>
                 </header>
 
-                {/* Page Content */}
+                {/* 페이지 콘텐츠 */}
                 <div className="flex-1 overflow-auto p-8">
                     <Outlet />
                 </div>

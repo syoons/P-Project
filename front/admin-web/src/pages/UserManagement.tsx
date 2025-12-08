@@ -1,45 +1,57 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Users, UserCheck, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
-
-// Mock Data
-const MOCK_USERS = Array.from({ length: 50 }, (_, i) => ({
-    id: i + 1,
-    joinDate: `2023-10-${String(Math.floor(Math.random() * 30) + 1).padStart(2, '0')}`,
-    nickname: `User${i + 1}`,
-    email: `user${i + 1}@example.com`,
-    ageGroup: ['10대', '20대', '30대', '40대', '50대'][Math.floor(Math.random() * 5)],
-    postCount: Math.floor(Math.random() * 50),
-    lastActive: `2023-11-${String(Math.floor(Math.random() * 24) + 1).padStart(2, '0')}`,
-    status: Math.random() > 0.2 ? '활성' : '휴면',
-}));
+import { getUsers, type User } from '../api/userApi';
 
 const UserManagement = () => {
     const [searchTerm, setSearchTerm] = useState('');
-    const [searchType, setSearchType] = useState('name'); // name, email
+    const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+    const [searchType, setSearchType] = useState<'name' | 'email'>('name');
     const [currentPage, setCurrentPage] = useState(1);
     const [statusFilter, setStatusFilter] = useState('all');
     const [ageFilter, setAgeFilter] = useState('all');
 
+    const [users, setUsers] = useState<User[]>([]);
+    const [totalPages, setTotalPages] = useState(0);
+    const [totalElements, setTotalElements] = useState(0);
+    const [loading, setLoading] = useState(false);
+
     const itemsPerPage = 10;
 
-    // Filter Logic
-    const filteredUsers = MOCK_USERS.filter(user => {
-        const matchesSearch = searchType === 'name'
-            ? user.nickname.toLowerCase().includes(searchTerm.toLowerCase())
-            : user.email.toLowerCase().includes(searchTerm.toLowerCase());
+    // 검색어 디바운싱
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearchTerm(searchTerm);
+            setCurrentPage(1); // 검색 변경 시 첫 페이지로 리셋
+        }, 500);
 
-        const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
-        const matchesAge = ageFilter === 'all' || user.ageGroup === ageFilter;
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
 
-        return matchesSearch && matchesStatus && matchesAge;
-    });
+    // 사용자 목록 가져오기
+    useEffect(() => {
+        const fetchUsers = async () => {
+            setLoading(true);
+            try {
+                const response = await getUsers({
+                    page: currentPage - 1, // API는 0부터 시작
+                    size: itemsPerPage,
+                    searchType: searchType,
+                    keyword: debouncedSearchTerm || undefined,
+                    // 참고: statusFilter와 ageFilter는 현재 API에서 지원하지 않음
+                });
+                setUsers(response.content);
+                setTotalPages(response.totalPages);
+                setTotalElements(response.totalElements);
+            } catch (error) {
+                console.error('Failed to fetch users:', error);
+                // 에러 처리 (예: 토스트 메시지 표시)
+            } finally {
+                setLoading(false);
+            }
+        };
 
-    // Pagination Logic
-    const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
-    const currentUsers = filteredUsers.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage
-    );
+        fetchUsers();
+    }, [currentPage, debouncedSearchTerm, searchType]); // statusFilter와 ageFilter는 사용되지 않아 의존성에서 제거
 
     return (
         <div className="flex flex-col gap-6 animate-fade-in">
@@ -47,7 +59,10 @@ const UserManagement = () => {
                 <h1 className="text-2xl font-bold text-primary">회원 관리</h1>
             </div>
 
-            {/* Top Bar: Stats */}
+            {/* 상단 바: 통계 - 참고: 문서에 이러한 요약 통계를 위한 특정 API가 없으므로 현재는 하드코딩됨. 
+                문서의 /admin/dashboard/userStats는 분포를 반환하며 총 개수는 아님.
+                하드코딩된 채로 두거나 "전체 회원 수"에 totalElements를 사용할 수 있음.
+            */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="card flex items-center gap-4">
                     <div className="p-3 rounded-full bg-primary-light text-primary">
@@ -55,7 +70,7 @@ const UserManagement = () => {
                     </div>
                     <div>
                         <p className="text-sm text-muted">전체 회원 수</p>
-                        <h3 className="text-xl font-bold">1,234명</h3>
+                        <h3 className="text-xl font-bold">{totalElements > 0 ? `${totalElements}명` : '-'}</h3>
                     </div>
                 </div>
                 <div className="card flex items-center gap-4">
@@ -64,7 +79,7 @@ const UserManagement = () => {
                     </div>
                     <div>
                         <p className="text-sm text-muted">활성 회원 수</p>
-                        <h3 className="text-xl font-bold">982명</h3>
+                        <h3 className="text-xl font-bold">-</h3>
                     </div>
                 </div>
                 <div className="card flex items-center gap-4">
@@ -73,17 +88,17 @@ const UserManagement = () => {
                     </div>
                     <div>
                         <p className="text-sm text-muted">최근 7일 활동</p>
-                        <h3 className="text-xl font-bold">456명</h3>
+                        <h3 className="text-xl font-bold">-</h3>
                     </div>
                 </div>
             </div>
 
-            {/* Middle Bar: Search */}
+            {/* 중간 바: 검색 */}
             <div className="card flex items-center gap-4 p-4">
                 <select
                     className="input-field w-1/4 min-w-[150px]"
                     value={searchType}
-                    onChange={(e) => setSearchType(e.target.value)}
+                    onChange={(e) => setSearchType(e.target.value as 'name' | 'email')}
                 >
                     <option value="name">이름</option>
                     <option value="email">이메일</option>
@@ -100,7 +115,7 @@ const UserManagement = () => {
                 </div>
             </div>
 
-            {/* Bottom: Table & Filters */}
+            {/* 하단: 테이블 & 필터 */}
             <div className="card flex flex-col gap-4">
                 <div className="flex flex-col md:flex-row justify-between items-center pb-4 border-b border-border gap-4">
                     <h3 className="font-bold text-lg whitespace-nowrap">회원 목록</h3>
@@ -140,54 +155,66 @@ const UserManagement = () => {
                 </div>
 
                 <div className="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>가입일</th>
-                                <th>닉네임</th>
-                                <th>이메일</th>
-                                <th>연령대</th>
-                                <th>글 수</th>
-                                <th>최근활동</th>
-                                <th>상태</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {currentUsers.map((user) => (
-                                <tr key={user.id}>
-                                    <td>{user.joinDate}</td>
-                                    <td className="font-medium">{user.nickname}</td>
-                                    <td className="text-muted">{user.email}</td>
-                                    <td>{user.ageGroup}</td>
-                                    <td>{user.postCount}</td>
-                                    <td>{user.lastActive}</td>
-                                    <td>
-                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${user.status === '활성' ? 'bg-green-100 text-success' : 'bg-gray-100 text-muted'
-                                            }`}>
-                                            {user.status}
-                                        </span>
-                                    </td>
+                    {loading ? (
+                        <div className="p-8 text-center text-muted">로딩 중...</div>
+                    ) : (
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>가입일</th>
+                                    <th>닉네임</th>
+                                    <th>이메일</th>
+                                    <th>연령대</th>
+                                    <th>글 수</th>
+                                    <th>최근활동</th>
+                                    <th>상태</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {users.length > 0 ? (
+                                    users.map((user) => (
+                                        <tr key={user.id}>
+                                            <td>{user.createdAt}</td>
+                                            <td className="font-medium">{user.nickname}</td>
+                                            <td className="text-muted">{user.email}</td>
+                                            <td>{user.birthGroup}</td>
+                                            <td>{user.postCount}</td>
+                                            <td>{user.lastActive}</td>
+                                            <td>
+                                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${user.deletedAt ? 'bg-gray-100 text-muted' : 'bg-green-100 text-success'
+                                                    }`}>
+                                                    {user.deletedAt ? '탈퇴' : '활성'}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan={6} className="text-center py-8 text-muted">
+                                            데이터가 없습니다.
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    )}
                 </div>
 
-                {/* Pagination */}
+                {/* 페이지네이션 */}
                 <div className="flex justify-center items-center gap-4 mt-4">
                     <button
                         className="btn btn-outline p-2"
-                        disabled={currentPage === 1}
+                        disabled={currentPage === 1 || loading}
                         onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                     >
                         <ChevronLeft size={16} />
                     </button>
                     <span className="text-sm font-medium">
-                        {currentPage} / {totalPages}
+                        {currentPage} / {totalPages || 1}
                     </span>
                     <button
                         className="btn btn-outline p-2"
-                        disabled={currentPage === totalPages}
+                        disabled={currentPage === totalPages || totalPages === 0 || loading}
                         onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                     >
                         <ChevronRight size={16} />

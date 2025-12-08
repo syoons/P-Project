@@ -19,14 +19,8 @@ const Login = () => {
     };
 
     return (
-        <div className="flex h-screen items-center justify-center bg-main relative overflow-hidden">
-            {/* Background Decoration */}
-            <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
-                <div className="absolute -top-24 -right-24 w-96 h-96 bg-primary-light rounded-full opacity-50 blur-3xl"></div>
-                <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-warning rounded-full opacity-20 blur-3xl"></div>
-            </div>
-
-            <div className="card w-full max-w-md relative z-10 p-8 shadow-lg animate-fade-in glass-panel">
+        <div className="flex h-screen w-full items-center justify-center bg-main">
+            <div className="card w-96 p-8 shadow-lg animate-fade-in glass-panel">
                 <div className="flex flex-col items-center mb-8">
                     <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center text-white mb-4 shadow-md">
                         <BookOpen size={24} />
