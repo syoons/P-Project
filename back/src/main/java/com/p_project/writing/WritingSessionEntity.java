@@ -46,6 +46,7 @@ public class WritingSessionEntity {
     @Column(name = "recommend_genre",length = 45)
     private String recommendGenre;
 
+    @Builder.Default
     @Column(name = "extra_questions")
     private Integer extraQuestions = 0;   // 추가 질문 개수
 

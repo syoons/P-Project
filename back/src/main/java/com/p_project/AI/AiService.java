@@ -17,7 +17,7 @@ public class AiService {
     private final RestTemplate restTemplate;
 
     // 내부 FastAPI 서버 포트 (다른 팀이 안 쓰는 포트로 사용)
-    private final String AI_SERVER_URL = "http://127.0.0.1:60099";
+    private final String AI_SERVER_URL = "http://127.0.0.1:61299";
 
     // -----------------------------
     // 첫 질문

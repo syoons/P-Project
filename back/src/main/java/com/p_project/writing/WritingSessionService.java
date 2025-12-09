@@ -11,9 +11,15 @@ import com.p_project.message.finalize.FinalizeRequestDTO;
 import com.p_project.message.finalize.FinalizeResponseDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -42,20 +48,20 @@ public class WritingSessionService {
 
         // AI → 첫 질문 요청 (messages 없음)
         String mode = session.getType().name();
-        AiResponseDTO first = aiService.generateNextQuestion(mode, List.of());
+        String first = aiService.getFirstQuestion(mode);
 
         // AI 질문 DB 저장
         messageRepository.save(
                 MessagesEntity.builder()
                         .sessionId(session.getId())
                         .role(MessagesEntity.MessageRole.AI)
-                        .content(first.getNextQuestion())
+                        .content(first)
                         .build()
         );
 
         return StartResponseDTO.builder()
                 .sessionId(session.getId())
-                .question(first.getNextQuestion())
+                .question(first)
                 .build();
     }
 
@@ -145,10 +151,18 @@ public class WritingSessionService {
 
         writingSessionRepository.save(session);
 
+        // 같은 감정 count 조회
+        int emotionCount = writingSessionRepository.countByEmotionAndCreatedAt(
+                aiResult.getEmotion(),
+                session.getCreatedAt().toLocalDate()
+        );
+
         return FinalizeResponseDTO.builder()
                 .sessionId(session.getId())
                 .content(aiResult.getContent())
+                .title(session.getTitle())
                 .emotion(aiResult.getEmotion())
+                .emotionCount(emotionCount-1)
                 .recommendTitle(aiResult.getRecommendTitle())
                 .recommendGenre(aiResult.getRecommendGenre())
                 .build();
@@ -188,8 +202,36 @@ public class WritingSessionService {
         );
 
         return FeedbackResponDTO.builder()
+                .sessionId(session.getId())
                 .done(false)
                 .question(ai.getNextQuestion())
                 .build();
+    }
+
+    public List<WritingSessionDTO> getRecentWritingSessions(Long userId) {
+        Pageable limitFive = PageRequest.of(0, 5);
+        return writingSessionRepository.findRecentWritingSessions(userId, limitFive)
+                .stream()
+                .map(w -> new WritingSessionDTO(
+                        w.getUserId(),
+                        w.getTitle(),
+                        w.getType().name(),
+                        w.getGenre(),
+                        w.getEmotion(),
+                        w.getContent(),
+                        w.getCreatedAt()
+                ))
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public WritingSessionEntity complete(Long id) {
+        WritingSessionEntity entity = writingSessionRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, // 404 상태 코드
+                        "Writing not found with id: " + id));
+
+        entity.setStatus(WritingSessionEntity.WritingStatus.COMPLETE);
+        return writingSessionRepository.save(entity);
     }
 }
