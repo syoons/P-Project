@@ -52,7 +52,7 @@ public class AdminLoginService {
 
             //  관리자 권한 체크
             String role = user.get().getRole().toUpperCase();
-            if (!role.equals("admin")) {
+            if (!role.equals("ADMIN")) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body("관리자 권한이 없습니다.");
             }
