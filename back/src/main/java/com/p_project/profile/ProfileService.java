@@ -1,6 +1,6 @@
 package com.p_project.profile;
 
-import lombok.RequiredArgsConstructor;
+import com.p_project.config.FileServiceConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -14,15 +14,20 @@ import java.util.UUID;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class ProfileService {
 
     private final ProfileRepository profileRepository;
+    private final String UPLOAD_DIR;
+    private final String BASE_URL;
+    private final FileServiceConfig config;
 
-    // 실제 파일이 저장될 로컬 경로 (서버 환경에 맞게 조정) TODO: 서버 배포시 경로 수정
-    private static final String UPLOAD_DIR = "/home/t25306/v0.5src/web/backend/img/";
-    // 접근 가능한 기본 URL (개발 중엔 localhost, 배포 시엔 도메인) TODO: 배포시 서버 수정
-    private static final String BASE_URL = "http://localhost:60013/img/";
+    public ProfileService(ProfileRepository profileRepository,
+                          FileServiceConfig config) {
+        this.profileRepository = profileRepository;
+        this.config = config;
+        this.UPLOAD_DIR = config.getUploadDir();
+        this.BASE_URL = config.getBaseUrl();
+    }
 
     public String uploadProfile(Long userId, MultipartFile file) {
         if (file.isEmpty()) {
@@ -55,7 +60,7 @@ public class ProfileService {
             return imageUrl;
 
         } catch (IOException e) {
-            throw new RuntimeException("파일 업로드 실패: " + e.getMessage(), e);
+            throw new FileUploadException("파일 업로드 중 오류가 발생했습니다.");
         }
     }
 
@@ -64,4 +69,9 @@ public class ProfileService {
             return profileRepository.findByUserId(userId);
     }
 
+    public static class FileUploadException extends RuntimeException {
+        public FileUploadException(String message) {
+            super(message);
+        }
+    }
 }

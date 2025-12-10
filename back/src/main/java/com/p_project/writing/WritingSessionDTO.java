@@ -11,10 +11,12 @@ import java.time.LocalDateTime;
 @Builder
 public class WritingSessionDTO {
 
+    private Long userId;
     private String title;
     private String type;
     private String genre;
     private String emotion;
+    private String content;
     private LocalDateTime createdAt;
 
 }

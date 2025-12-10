@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -31,13 +32,17 @@ public class HomeService {
         Map<String, String> userInfo = userService.findNameAndNickNameByUserId(userId);
         List<WritingSessionDTO> writingSessionDTO = writingSessionService.getRecentWritingSessions(userId);
 
+        LocalDateTime writingTime = writingSessionDTO.isEmpty()
+                ? null
+                : writingSessionDTO.get(0).getCreatedAt();
+
         return HomeDTO.builder()
                 .diaryNum(diaryNum)
                 .bookReportNum(bookNum)
                 .totalNum(diaryNum + bookNum)
                 .nickName(userInfo.get("nickName"))
                 .name(userInfo.get("name"))
-                .writingTime(writingSessionDTO.get(0).getCreatedAt())
+                .writingTime(writingTime)
                 .writingSessionDTOS(writingSessionDTO)
                 .build();
     }

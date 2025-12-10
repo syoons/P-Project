@@ -25,22 +25,32 @@ public class WritingSessionEntity {
     private Type type;
 
     @Enumerated(EnumType.STRING)
-    @Column(length = 45, nullable = false)
+    @Column(length = 45)
     private WritingStatus status;
 
-    @Column(length = 45, nullable = false)
+    @Column(length = 45)
     private String genre;
 
-    @Column(length = 45, nullable = false)
+    @Column(length = 45)
     private String emotion;
 
-    @Column(length = 45, nullable = false)
+    @Column(length = 100)
     private String title;
 
     @Column(columnDefinition = "TEXT")
     private String content;
 
-    @Column(name = "created_at", nullable = false, updatable = false,
+    @Column(name = "recommend_title", length = 100)
+    private String recommendTitle;
+
+    @Column(name = "recommend_genre",length = 45)
+    private String recommendGenre;
+
+    @Builder.Default
+    @Column(name = "extra_questions")
+    private Integer extraQuestions = 0;   // 추가 질문 개수
+
+    @Column(name = "created_at",
             columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime createdAt;
 
@@ -62,4 +72,18 @@ public class WritingSessionEntity {
         DRAFT,      // 작성 중
         DELETED    // 삭제
     }
+
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
+
+
 }

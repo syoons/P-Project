@@ -1,11 +1,13 @@
 package com.p_project.friend;
 
 import com.p_project.calendar.CalendarDTO;
+import com.p_project.oauth2.CustomOAuth2User;
 import com.p_project.user.UserDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -28,51 +30,57 @@ public class FriendController {
     }
 
     @PostMapping("/accept")
-    public ResponseEntity<Integer> acceptFriend(@RequestParam Long fromUserId,
-                                               @RequestParam Long toUserId) {
-        friendService.acceptFriend(fromUserId, toUserId);
+    public ResponseEntity<Integer> acceptFriend(Authentication auth,
+                                                @RequestParam Long fromUserId) {
+        CustomOAuth2User principal = (CustomOAuth2User) auth.getPrincipal();
+        friendService.acceptFriend(fromUserId, principal.getUserId());
         return ResponseEntity.ok(200);
     }
 
-    @GetMapping("/list/{userId}")
-    public ResponseEntity<List<UserDTO>> listFriendRequest(@PathVariable Long userId){
+    @GetMapping("/list")
+    public ResponseEntity<List<UserDTO>> listFriendRequest(Authentication auth){
         log.info("in FriendController: aceptFriendRequest");
 
-        List<UserDTO> users = friendService.getMutualFriends(userId);
+        CustomOAuth2User principal = (CustomOAuth2User) auth.getPrincipal();
+        List<UserDTO> users = friendService.getMutualFriends(principal.getUserId());
         return ResponseEntity.ok(users);
     }
 
-    @GetMapping("/requests/{userId}")
-    public ResponseEntity<List<UserDTO>> getPendingRequests(@PathVariable Long userId) {
-        List<UserDTO> requests = friendService.getPendingRequests(userId);
+    @GetMapping("/requests/list")
+    public ResponseEntity<List<UserDTO>> getPendingRequests(Authentication auth) {
+        CustomOAuth2User principal = (CustomOAuth2User) auth.getPrincipal();
+        List<UserDTO> requests = friendService.getPendingRequests(principal.getUserId());
+
         return ResponseEntity.ok(requests);
     }
 
     @PostMapping("/request")
-    public ResponseEntity<Integer> sendFriendRequest(
-            @RequestParam Long fromUserId,
+    public ResponseEntity<FriendSimpleDTO> sendFriendRequest(Authentication auth,
             @RequestParam String email) {
 
-        friendService.sendFriendRequest(fromUserId, email);
-        return ResponseEntity.ok(200);
+        CustomOAuth2User principal = (CustomOAuth2User) auth.getPrincipal();
+        FriendSimpleDTO friendSimpleDTO = friendService.sendFriendRequest(principal.getUserId(), email);
+        return ResponseEntity.ok(friendSimpleDTO);
     }
 
     @PostMapping("/request/delete")
-    public ResponseEntity<Integer> deleteFriendRequest(
-            @RequestParam Long fromUserId,
-            @RequestParam Long toUserId) {
+    public ResponseEntity<Integer> deleteFriendRequest(Authentication auth,
+            @RequestParam Long fromUserId) {
 
-        friendService.deleteFriendRequest(fromUserId, toUserId);
+        CustomOAuth2User principal = (CustomOAuth2User) auth.getPrincipal();
+        friendService.deleteFriendRequest(fromUserId, principal.getUserId());
+
         return ResponseEntity.ok(200);
     }
 
     @GetMapping("/calendar")
     public ResponseEntity<CalendarDTO> getFriendCalendarSummary(
-            @RequestParam Long userId,
+            Authentication auth,
             @RequestParam Long friendId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
     ) {
-        CalendarDTO calendar = friendService.getFriendCalendarSummary(userId, friendId, date);
+        CustomOAuth2User principal = (CustomOAuth2User) auth.getPrincipal();
+        CalendarDTO calendar = friendService.getFriendCalendarSummary(principal.getUserId(), friendId, date);
         return ResponseEntity.ok(calendar);
     }
 }

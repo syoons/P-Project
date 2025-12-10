@@ -1,19 +1,18 @@
-// app/profile/edit.tsx - 프로필 편집 화면
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { updateUserProfile } from '../api/services';  // API 서비스 추가
 import { globalStyles, colors } from '../styles/globalStyles';
 
-// User 타입을 수정하여 id를 선택적으로 변경
 interface User {
-  id?: number;
+  id: number;
   username: string;
   email: string;
   gender: string;
   birthDate: string;
   name: string;
-  joinDate?: string; // joinDate를 string | undefined로 수정
+  joinDate?: string;
   profileImage?: string | null;
 }
 
@@ -24,6 +23,7 @@ export default function ProfileEditScreen() {
   const [email, setEmail] = useState('');
   const [gender, setGender] = useState('');
   const [birthDate, setBirthDate] = useState('');
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     loadUserData();
@@ -48,31 +48,30 @@ export default function ProfileEditScreen() {
 
   // 저장 버튼 클릭 시
   const handleSave = async () => {
-    if (!username.trim() || !email.trim() || !gender.trim() || !birthDate.trim()) {
-      Alert.alert('알림', '모든 필드를 채워주세요.');
-      return;
-    }
+  if (!username.trim() || !email.trim() || !gender.trim() || !birthDate.trim()) {
+    Alert.alert('알림', '모든 필드를 채워주세요.');
+    return;
+  }
+  if (!user?.id) {
+    Alert.alert('오류', '사용자 정보를 찾을 수 없습니다. 다시 로그인 해주세요.');
+    return;
+  }
 
-    // name이 undefined일 경우 빈 문자열로 처리
-    const updatedUser: User = {
-      ...(user || {}),
-      username,
-      email,
-      gender,
-      birthDate,
-      name: user?.name || '', // name이 없으면 빈 문자열로 설정
-    };
+  setLoading(true);
+  try {
 
-    try {
-      await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
-      setUser(updatedUser);
-      Alert.alert('성공', '프로필이 업데이트되었습니다.');
-      router.back(); // 마이페이지로 돌아가기
-    } catch (error) {
-      console.error('사용자 데이터 저장 실패:', error);
-      Alert.alert('오류', '프로필 업데이트 중 오류가 발생했습니다.');
-    }
-  };
+    const updatedUser = await updateUserProfile(user.id, email, username, gender, birthDate);
+    await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+    setUser(updatedUser);
+    Alert.alert('성공', '프로필이 업데이트되었습니다.');
+    router.back(); 
+  } catch (error) {
+    console.error('사용자 데이터 저장 실패:', error);
+    Alert.alert('오류', '프로필 업데이트 중 오류가 발생했습니다.');
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <View style={globalStyles.screen}>
@@ -118,8 +117,9 @@ export default function ProfileEditScreen() {
         <TouchableOpacity
           style={styles.button}
           onPress={handleSave}
+          disabled={loading}
         >
-          <Text style={styles.buttonText}>저장</Text>
+          <Text style={styles.buttonText}>{loading ? '저장 중...' : '저장'}</Text>
         </TouchableOpacity>
       </View>
     </View>

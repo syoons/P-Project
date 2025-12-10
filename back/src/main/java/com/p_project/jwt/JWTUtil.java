@@ -5,7 +5,6 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,7 +19,6 @@ public class JWTUtil {
     private Key key;
 
     public JWTUtil(@Value("${spring.jwt.secret}")String secret) {
-
 
         byte[] byteSecretKey = Decoders.BASE64.decode(secret);
         key = Keys.hmacShaKeyFor(byteSecretKey);
@@ -42,9 +40,10 @@ public class JWTUtil {
         return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody().getExpiration().before(new Date());
     }
 
-    public String createJwt(String userEmail, String role, Long expiredMs) {
+    public String createJwt(Long userId, String userEmail, String role, Long expiredMs) {
 
         Claims claims = Jwts.claims();
+        claims.put("userId", userId);
         claims.put("userEmail", userEmail);
         claims.put("role", role);
 
@@ -68,11 +67,12 @@ public class JWTUtil {
         return null;
     }
 
-    public String createToken(String email, String role) {
+    public String createToken(Long userId, String email, String role) {
         long expirationTime = 1000 * 60 * 60; // 1시간
         Date now = new Date();
 
         return Jwts.builder()
+                .claim("userId", userId)
                 .setSubject(email)
                 .claim("role", role)
                 .setIssuedAt(now)
@@ -90,10 +90,13 @@ public class JWTUtil {
                 .getSubject();
     }
 
-    @PostConstruct
-    public void printTestToken() {
-        String token = createToken("yeji@naver.com", "USER");
-        System.out.println("Swagger 테스트용 토큰 생성 완료");
-        System.out.println("Bearer " + token);
+    public Long getUserId(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+
+        return claims.get("userId", Long.class);
     }
 }

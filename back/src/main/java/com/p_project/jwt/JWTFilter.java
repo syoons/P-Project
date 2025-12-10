@@ -2,6 +2,8 @@ package com.p_project.jwt;
 
 import com.p_project.oauth2.CustomOAuth2User;
 import com.p_project.user.UserDTO;
+import com.p_project.user.UserEntity;
+import com.p_project.user.UserRepository;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
@@ -25,6 +27,12 @@ import java.io.IOException;
 public class JWTFilter extends OncePerRequestFilter {
 
     private final JWTUtil jwtUtil;
+    private final UserRepository userRepository;
+
+    // Refresh Token을 위한 헤더 이름 상수 정의 (클라이언트와 약속)
+    private static final String REFRESH_TOKEN_HEADER = "X-Refresh-Token";
+    private static final String AUTHORIZATION_HEADER = "Authorization";
+    private static final String BEARER_PREFIX = "Bearer ";
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -33,51 +41,53 @@ public class JWTFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         String uri = request.getRequestURI();
+        String method = request.getMethod();
+
+        String authHeader = request.getHeader("Authorization");
+        log.debug("[JWTFilter] Authorization Header: {}", authHeader);
+
+
+        log.debug("[JWTFilter] Incoming Request → METHOD: {}, URI: {}", method, uri);
+
+
+        //로그인 문제로 추가
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            log.debug("[JWTFilter] Skip JWT Filter → OPTIONS Preflight Request");
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+
 
         if (uri.startsWith("/oauth2") ||
                 uri.startsWith("/login/oauth2") ||
                 uri.startsWith("/login") ||
                 uri.startsWith("/error") ||
+                uri.startsWith("/api/users/login") ||
+                uri.startsWith("/api/users/register") ||
                 uri.startsWith("/favicon") ||
                 uri.startsWith("/swagger") ||
                 uri.startsWith("/v3") ||
                 uri.startsWith("/webjars")) {
 
+            log.debug("[JWTFilter] Skip JWT Filter → Whitelisted URL");
+
             filterChain.doFilter(request, response);
             return;
         }
 
-        Cookie[] cookies = request.getCookies();
-        log.info(">>> [JWTFilter] 요청 경로: {}", request.getRequestURI());
-        if (cookies != null) {
-            for (Cookie cookie : cookies) {
-                log.info(">>> Cookie: {} = {}", cookie.getName(), cookie.getValue());
-            }
-        } else {
-            log.info(">>> 쿠키 없음 (Cookie[] is null)");
-        }
-
-        String accessToken = null;
-
-        // 1. 헤더에서 Access Token 추출
-        String headerAuth = request.getHeader("Authorization");
-        if (headerAuth != null && headerAuth.startsWith("Bearer ")) {
-            accessToken = headerAuth.substring(7);
-        }
-
-        // 2. 헤더에 없으면 쿠키에서 추출 (쿠키 이름: accessToken)
-        if (accessToken == null || accessToken.isBlank()) {
-            accessToken = getCookieValue(request, "accessToken");
-        }
+        // 1. Access Token 추출: 오직 Authorization 헤더만 사용
+        String accessToken = resolveToken(request, AUTHORIZATION_HEADER, BEARER_PREFIX);
 
         if (accessToken == null || accessToken.isBlank()) {
+            // 토큰이 없으면 익명으로 다음 필터로 이동
             filterChain.doFilter(request, response);
             return;
         }
 
         try {
             if (jwtUtil.isExpired(accessToken)) {
-                // Access Token 만료 시 Refresh Token 확인
+                // Access Token 만료 시 Refresh Token 확인 로직 호출
                 handleExpiredAccessToken(request, response, filterChain);
                 return;
             }
@@ -87,65 +97,75 @@ public class JWTFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
 
         } catch (ExpiredJwtException ex) {
+            // Access Token 만료 예외 발생 시 Refresh Token 확인 로직 호출
             handleExpiredAccessToken(request, response, filterChain);
         } catch (JwtException | IllegalArgumentException ex) {
             log.error("JWT 처리 중 오류 발생: {}", ex.getMessage());
+            // 토큰이 유효하지 않으면 401 JSON 응답
             writeUnauthorizedJson(response, "TOKEN_INVALID", "Invalid JWT");
         }
+    }
+
+    // 2. 토큰 추출 메서드: 헤더에서 'Bearer ' 접두사를 제거하고 토큰 추출
+    private String resolveToken(HttpServletRequest request, String headerName, String prefix) {
+        String token = request.getHeader(headerName);
+        if (token != null && token.startsWith(prefix)) {
+            return token.substring(prefix.length());
+        }
+        return null;
     }
 
     private void handleExpiredAccessToken(HttpServletRequest request,
                                           HttpServletResponse response,
                                           FilterChain filterChain) throws IOException, ServletException {
-        String refreshToken = getCookieValue(request, "RefreshToken");
+        // 3. Refresh Token 추출: X-Refresh-Token 헤더에서 추출 (클라이언트와 약속)
+        String refreshToken = request.getHeader(REFRESH_TOKEN_HEADER);
 
         if (refreshToken == null || refreshToken.isBlank()) {
-            clearAuthCookies(response);
+            // Refresh Token이 없으면 로그인 필요
             writeUnauthorizedJson(response, "TOKEN_EXPIRED", "Access token expired. Please login again.");
             return;
         }
 
         try {
             if (jwtUtil.isExpired(refreshToken)) {
-                clearAuthCookies(response);
+                // Refresh Token도 만료되었으면 로그인 필요
                 writeUnauthorizedJson(response, "REFRESH_EXPIRED", "Refresh token expired. Please login again.");
                 return;
             }
 
-            // Refresh Token 유효 → Access Token 재발급
+            // Refresh Token 유효 → 새 Access Token 생성
             String email = jwtUtil.getEmail(refreshToken);
             String role = jwtUtil.getRole(refreshToken);
+            UserEntity user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("유저 없음"));
 
-            // 새 Access Token 생성
-            String newAccessToken = jwtUtil.createToken(email, role);
+            // 새 Access Token 생성 (기존 TTL 사용)
+            String newAccessToken = jwtUtil.createToken(user.getId(), email, role);
 
-            // 새 Access Token 쿠키 저장 (쿠키 이름: accessToken)
-            Cookie newAccessCookie = new Cookie("accessToken", newAccessToken);
-            newAccessCookie.setHttpOnly(true);
-            newAccessCookie.setPath("/");
-            newAccessCookie.setMaxAge(60 * 60); // 1시간
-            response.addCookie(newAccessCookie);
+            // 4. 새 Access Token을 응답 헤더에 담아 전송 (클라이언트가 저장하도록 유도)
+            response.setHeader(AUTHORIZATION_HEADER, BEARER_PREFIX + newAccessToken);
 
             // SecurityContext 재설정 후 다음 필터 진행
             setAuthentication(newAccessToken);
             filterChain.doFilter(request, response);
 
-
         } catch (JwtException e) {
             log.error("Refresh JWT 처리 중 오류 발생: {}", e.getMessage());
-            clearAuthCookies(response);
             writeUnauthorizedJson(response, "REFRESH_INVALID", "Invalid refresh token");
         }
     }
 
     private void setAuthentication(String token) {
+        Long userId = jwtUtil.getUserId(token);
         String email = jwtUtil.getEmail(token);
         String role = jwtUtil.getRole(token);
 
         UserDTO userDTO = new UserDTO();
 
-        // 🌟 CRITICAL FIX: 이메일을 UserDTO의 email 필드에 저장
+        //  CRITICAL FIX: 이메일을 UserDTO의 email 필드에 저장
         userDTO.setEmail(email);
+        userDTO.setId(userId);
         // 기존 코드에 따라 닉네임에도 이메일을 설정 (필요에 따라 수정 가능)
         userDTO.setNickname(email);
         userDTO.setRole(role);
@@ -158,16 +178,6 @@ public class JWTFilter extends OncePerRequestFilter {
         SecurityContextHolder.getContext().setAuthentication(authToken);
     }
 
-    private String getCookieValue(HttpServletRequest request, String name) {
-        Cookie[] cookies = request.getCookies();
-        if (cookies == null) return null;
-        for (Cookie c : cookies) {
-            if (name.equals(c.getName())) {
-                return c.getValue();
-            }
-        }
-        return null;
-    }
 
     private void writeUnauthorizedJson(HttpServletResponse response, String code, String message) throws IOException {
         SecurityContextHolder.clearContext();
@@ -176,17 +186,4 @@ public class JWTFilter extends OncePerRequestFilter {
         response.getWriter().write("{\"code\":\"" + code + "\",\"message\":\"" + message + "\"}");
     }
 
-    // 토큰 만료 시 쿠키 삭제
-    private void clearAuthCookies(HttpServletResponse response) {
-        // 💡 FIX: Access Token 쿠키 이름 'accessToken'으로 통일
-        Cookie accessCookie = new Cookie("accessToken", null);
-        accessCookie.setMaxAge(0);
-        accessCookie.setPath("/");
-        response.addCookie(accessCookie);
-
-        Cookie refreshCookie = new Cookie("RefreshToken", null);
-        refreshCookie.setMaxAge(0);
-        refreshCookie.setPath("/");
-        response.addCookie(refreshCookie);
-    }
 }

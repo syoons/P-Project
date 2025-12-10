@@ -21,4 +21,17 @@ public class BookController {
         List<DiaryDTO> reports = bookService.getAllReports();
         return ResponseEntity.ok(reports);
     }
+
+    @PostMapping("/{id}/complete")
+    public ResponseEntity<?> complete(@PathVariable Long id) {
+        return ResponseEntity.ok(bookService.complete(id));
+    }
+
+    @GetMapping("/me/books")
+    public ResponseEntity<List<BookDTO>> getMyBookSessionList() {
+
+        List<BookDTO> reviewedBooks = bookService.getMyBookSessions();
+
+        return ResponseEntity.ok(reviewedBooks);
+    }
 }

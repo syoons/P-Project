@@ -4,6 +4,7 @@ import { View, Text, TouchableOpacity, ScrollView, Alert, StyleSheet } from 'rea
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { globalStyles, colors } from '../../styles/globalStyles';
+import { getUserProfile } from '../../api/services';
 
 interface User {
   id: number;
@@ -17,19 +18,36 @@ interface User {
 export default function MyPageScreen() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
+  const [email, setEmail] = useState('');
+  const [nickName, setNickName] = useState('');
+  const [gender, setGender] = useState('');
+  const [profileImage, setProfileImage] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
   }, []);
 
-  const loadData = async () => {
-    try {
-      const userData = await AsyncStorage.getItem('user');
-      if (userData) setUser(JSON.parse(userData));
-    } catch (error) {
-      console.error('데이터 로드 실패:', error);
+ const loadData = async () => {
+  try {
+    const userData = await AsyncStorage.getItem('user');
+    if (userData) {
+      const parsedUserData = JSON.parse(userData);
+      setUser(parsedUserData);
+      setEmail(parsedUserData.email);
+      setNickName(parsedUserData.username);
+      setGender(parsedUserData.gender);
+      setProfileImage(parsedUserData.profileImage);
+
+      // API 호출 시 userId를 number로 변환하여 전달
+      await getUserProfile(Number(parsedUserData.id));  // userId를 number로 변환하여 전달
     }
-  };
+  } catch (error) {
+    console.error('데이터 로드 실패:', error);
+    Alert.alert("오류", "데이터 로드 실패");
+  }
+};
+
+
 
   const handleLogout = async () => {
     Alert.alert(
@@ -42,7 +60,7 @@ export default function MyPageScreen() {
           onPress: async () => {
             try {
               await AsyncStorage.removeItem('user');
-              router.replace('/Login Page' as any);
+              router.replace('/' as any);
             } catch (error) {
               console.error('로그아웃 실패:', error);
             }
@@ -71,57 +89,65 @@ export default function MyPageScreen() {
     }
   ];
 
-  return (
-    <ScrollView style={globalStyles.screen}>
-      {/* 헤더 */}
-      <View style={globalStyles.header}>
-        <Text style={globalStyles.title}>마이페이지</Text>
-      </View>
+ return (
+  <ScrollView style={globalStyles.screen}>
+    {/* 헤더 */}
+    <View style={globalStyles.header}>
+      <Text style={globalStyles.title}>마이페이지</Text>
+    </View>
 
-      {/* 프로필 카드 */}
-      <View style={styles.profileCard}>
-        <View style={styles.profileHeader}>
-          <View style={styles.avatarContainer}>
-            <Text style={styles.avatar}>👤</Text>
-          </View>
-          <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>{user?.username}</Text>
-            <Text style={styles.profileBio}>닉네임</Text>
-          </View>
+    {/* 프로필 카드 */}
+    <View style={styles.profileCard}>
+      <View style={styles.profileHeader}>
+        <View style={styles.avatarContainer}>
+          <Text style={styles.avatar}>👤</Text>
+        </View>
+        <View style={styles.profileInfo}>
+          {/* 사용자 이름 표시 */}
+          <Text style={styles.profileName}>
+            {user?.username || '이름이 없습니다'}
+          </Text> 
+          {/* 닉네임을 user?.username으로 변경 */}
+          <Text style={styles.profileBio}>
+            {user?.username || '닉네임이 없습니다'}
+          </Text>
         </View>
       </View>
+    </View>
 
-      {/* 메뉴 리스트 */}
-      <View style={styles.menuSection}>
-        {menuItems.map((item, index) => (
-          <TouchableOpacity 
-            key={index}
-            style={styles.menuItem}
-            onPress={item.onPress}
-          >
-            <Text style={styles.menuIcon}>{item.icon}</Text>
-            <Text style={styles.menuText}>{item.title}</Text>
-            <Text style={styles.menuArrow}></Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* 하단 안내 */}
-      <View style={styles.bottomInfo}>
-        <Text style={styles.infoText}>버전: 1.0.0</Text>
-      </View>
-
-      {/* 로그아웃 버튼 */}
-      <View style={styles.logoutSection}>
+    {/* 메뉴 리스트 */}
+    <View style={styles.menuSection}>
+      {menuItems.map((item, index) => (
         <TouchableOpacity 
-          style={[globalStyles.button, globalStyles.dangerButton]}
-          onPress={handleLogout}
+          key={index}
+          style={styles.menuItem}
+          onPress={item.onPress}
         >
-          <Text style={globalStyles.buttonText}>로그아웃</Text>
+          <Text style={styles.menuIcon}>{item.icon}</Text>
+          <Text style={styles.menuText}>{item.title}</Text>
+          <Text style={styles.menuArrow}></Text>
         </TouchableOpacity>
-      </View>
-    </ScrollView>
-  );
+      ))}
+    </View>
+
+    {/* 하단 안내 */}
+    <View style={styles.bottomInfo}>
+      <Text style={styles.infoText}>버전: 1.0.0</Text>
+    </View>
+
+    {/* 로그아웃 버튼 */}
+    <View style={styles.logoutSection}>
+      <TouchableOpacity 
+        style={[globalStyles.button, globalStyles.dangerButton]}
+        onPress={handleLogout}
+      >
+        <Text style={globalStyles.buttonText}>로그아웃</Text>
+      </TouchableOpacity>
+    </View>
+  </ScrollView>
+);
+
+
 }
 
 const styles = StyleSheet.create({

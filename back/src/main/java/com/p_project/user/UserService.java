@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -30,6 +31,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JWTUtil jwtUtil;
+    private final ResourcePatternResolver resourcePatternResolver;
 
 
     public void resetPassword(PasswordResetDTO dto) {
@@ -97,29 +99,37 @@ public class UserService {
         }
     }
 
-    public ResponseEntity<?> login(String email, String password, HttpServletResponse response) {
+    public ResponseEntity<?> login(UserDTO userDTO) {
 
         try {
+            String email = userDTO.getEmail();
+            String password = userDTO.getPwd();
+
+            log.debug("[JWTFilter] Incoming Request → email: {}, password: {}", email, password);
+
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(email, password)
             );
-            String role = authentication.getAuthorities().iterator().next().getAuthority();
-            String accessToken = jwtUtil.createJwt(email, role, 1000L * 60 * 60); // 1시간
-            String refreshToken = jwtUtil.createJwt(email, role, 1000L * 60 * 60 * 24 * 14); // 14일
 
-            Cookie accessCookie = new Cookie("accessToken", accessToken);
-            accessCookie.setHttpOnly(true);
-            accessCookie.setPath("/");
-            accessCookie.setMaxAge(60 * 60);
+            Optional<UserEntity> user = userRepository.findByEmail(email);
 
-            Cookie refreshCookie = new Cookie("RefreshToken", refreshToken);
-            refreshCookie.setHttpOnly(true);
-            refreshCookie.setPath("/");
-            refreshCookie.setMaxAge(60 * 60 * 24 * 14);
-            response.addCookie(accessCookie);
-            response.addCookie(refreshCookie);
+            String role = authentication.getAuthorities().iterator().next().getAuthority().toUpperCase();
+            Long userId = user.get().getId();
 
-            return ResponseEntity.ok("로그인 성공");
+            // 2. Access/Refresh Token 생성 (기존 로직 유지)
+            String accessToken = jwtUtil.createJwt(userId, email, role, 1000L * 60 * 60); // 1시간
+            String refreshToken = jwtUtil.createJwt(userId, email, role, 1000L * 60 * 60 * 24 * 14); // 14일
+
+
+            // 4. JWT를 JSON 응답 본문으로 반환
+            LoginResponseDTO responseDto = new LoginResponseDTO(
+                    accessToken,
+                    refreshToken,
+                    userId
+            );
+
+            // 200 OK와 함께 JWT 토큰을 JSON 본문으로 반환
+            return ResponseEntity.ok(responseDto);
 
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -176,6 +186,30 @@ public class UserService {
     public Optional<UserEntity> findByNickname(String nickName){
 
         return userRepository.findByNickname(nickName);
+    }
+
+    public boolean exitsEmail(String email) {
+
+        boolean result = false;
+        if (userRepository.findByEmail(email).isPresent()) {
+            result = true;
+        }
+        return result;
+    }
+
+    public boolean exitsNickName(String nickName) {
+
+        boolean result = false;
+        if (userRepository.findByNickname(nickName).isPresent()) {
+            result = true;
+        }
+        return result;
+    }
+
+    public Long findUserIdByEmail (String email) {
+
+            Optional<UserEntity> userEntity  = userRepository.findByEmail(email);
+        return userEntity.get().getId();
     }
 
 }

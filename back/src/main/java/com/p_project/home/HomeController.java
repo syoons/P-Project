@@ -7,7 +7,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Optional;
 
@@ -20,10 +23,11 @@ public class HomeController {
     private final HomeService homeService;
     private final UserRepository userRepository;
 
-    @GetMapping("/{userId}")
-    public ResponseEntity<HomeDTO> getHome(@PathVariable Long userId){
+    @GetMapping
+    public ResponseEntity<HomeDTO> getHome(Authentication auth){
         log.info("in HomeController: getHome");
-        HomeDTO response = homeService.getHome(userId);
+        CustomOAuth2User principal = (CustomOAuth2User) auth.getPrincipal();
+        HomeDTO response = homeService.getHome(principal.getUserId());
 
         return ResponseEntity.ok(response);
     }
@@ -52,6 +56,7 @@ public class HomeController {
 
         return ResponseEntity.ok(userId);
     }
+
 
 
 }

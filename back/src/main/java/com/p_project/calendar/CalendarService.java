@@ -61,6 +61,8 @@ public class CalendarService {
 
 
         return CalendarDTO.builder()
+                .userId(userId)
+                .friendId(friendId)
                 .countDiary(countDiary)
                 .countBook(countBook)
                 .totalNum(totalNum)

@@ -42,6 +42,7 @@ public class MyPageService {
                 .orElse(null);
 
         myPageDTO.updateProfile(user.getNickname(),user.getEmail(), profileUrl);
+        myPageDTO.setUserId(userId);
 
         return myPageDTO;
     }
