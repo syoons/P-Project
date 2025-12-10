@@ -5,6 +5,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/admin")
@@ -25,5 +27,13 @@ public class AdminLoginController {
     @PostMapping("/change-password")
     public ResponseEntity<?> changePassword(@RequestBody UserDTO dto) {
         return adminLoginService.changeAdminPassword(dto);
+    }
+
+    //테스트용 삭제예정
+    @PostMapping("/encode-password")
+    public ResponseEntity<?> encodePassword(@RequestBody Map<String, String> request) {
+        String raw = request.get("password");
+        String encoded = adminLoginService.encodePwd(raw);
+        return ResponseEntity.ok(encoded);
     }
 }

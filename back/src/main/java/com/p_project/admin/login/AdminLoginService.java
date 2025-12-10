@@ -148,5 +148,6 @@ public class AdminLoginService {
         return ResponseEntity.ok("관리자 비밀번호가 성공적으로 변경되었습니다.");
     }
 
+    public String encodePwd(String raw) { return passwordEncoder.encode(raw); }
 
 }
