@@ -34,11 +34,11 @@ const UserManagement = () => {
         return () => clearTimeout(timer);
     }, [searchTerm]);
 
-    // 📊 통계 데이터 계산을 위한 전체 데이터 조회
+    // 통계 데이터 계산을 위한 전체 데이터 조회
     useEffect(() => {
         const calculateStats = async () => {
             try {
-                // API가 통계 기능을 제공하지 않아 임시로 최대 10000명의 데이터를 가져와 client-side에서 계산
+                // 최대 10000명의 데이터를 가져와 client-side에서 계산
                 const response = await getUsers({
                     page: 0,
                     size: 10000,
@@ -170,9 +170,6 @@ const UserManagement = () => {
             </div>
 
 
-
-
-
             {/* 하단: 테이블 & 필터 */}
             <div className="card flex flex-col gap-4">
                 <div
@@ -183,65 +180,64 @@ const UserManagement = () => {
                     <h3 className="font-bold text-lg whitespace-nowrap py-6">회원 목록</h3>
 
 
-
                     <div className="flex items-center w-full xl:w-auto justify-between overflow-x-auto pb-1 xl:pb-0">
 
 
-                        {/* 검색 영역 */}
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                            <select
-                                className="select-compact w-[70px]"
-                                value={searchType}
-                                onChange={(e) => setSearchType(e.target.value as 'name' | 'email')}
-                            >
-                                <option value="name">이름</option>
-                                <option value="email">이메일</option>
-                            </select>
-                            <div style={{ width: '180px', gap: '4px' }} className="flex items-center border border-border rounded-lg px-2 bg-white focus-within:ring-2 ring-primary-light transition-all">
-                                <Search className="text-muted flex-shrink-0" size={24} />
-                                <input
-                                    type="text"
-                                    style={{ fontSize: '16px', padding: '6px 8px' }}
-                                    className="w-full outline-none text-main placeholder:text-muted bg-transparent"
-                                    placeholder="검색어 입력"
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                />
+                        <div className="flex items-center gap-4">
+                            {/* 검색 영역 */}
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                                <select
+                                    className="select-compact w-[70px]"
+                                    value={searchType}
+                                    onChange={(e) => setSearchType(e.target.value as 'name' | 'email')}
+                                >
+                                    <option value="name">이름</option>
+                                    <option value="email">이메일</option>
+                                </select>
+                                <div style={{ width: '180px', gap: '4px' }} className="flex items-center border border-border rounded-lg px-2 bg-white focus-within:ring-2 ring-primary-light transition-all">
+                                    <Search className="text-muted flex-shrink-0" size={24} />
+                                    <input
+                                        type="text"
+                                        style={{ fontSize: '16px', padding: '6px 8px' }}
+                                        className="w-full outline-none text-main placeholder:text-muted bg-transparent"
+                                        placeholder="검색어 입력"
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+
+
+                            {/* 필터 영역 */}
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                                <select
+                                    className="select-compact min-w-[100px]"
+                                    value={statusFilter}
+                                    onChange={(e) => setStatusFilter(e.target.value)}
+                                >
+                                    <option value="all">상태 전체</option>
+                                    <option value="활성">활성</option>
+                                    <option value="휴면">휴면</option>
+                                </select>
+                                <select
+                                    className="select-compact min-w-[110px]"
+                                    value={ageFilter}
+                                    onChange={(e) => setAgeFilter(e.target.value)}
+                                >
+                                    <option value="all">연령대 전체</option>
+                                    <option value="10대">10대</option>
+                                    <option value="20대">20대</option>
+                                    <option value="30대">30대</option>
+                                    <option value="40대">40대</option>
+                                    <option value="50대 이상">50대 이상</option>
+                                </select>
+
                             </div>
                         </div>
 
-
-                        {/* 필터 영역 */}
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                            <select
-                                className="select-compact min-w-[100px]"
-                                value={statusFilter}
-                                onChange={(e) => setStatusFilter(e.target.value)}
-                            >
-                                <option value="all">상태 전체</option>
-                                <option value="활성">활성</option>
-                                <option value="휴면">휴면</option>
-                            </select>
-                            <select
-                                className="select-compact min-w-[110px]"
-                                value={ageFilter}
-                                onChange={(e) => setAgeFilter(e.target.value)}
-                            >
-                                <option value="all">연령대 전체</option>
-                                <option value="10대">10대</option>
-                                <option value="20대">20대</option>
-                                <option value="30대">30대</option>
-                                <option value="40대">40대</option>
-                                <option value="50대 이상">50대 이상</option>
-                            </select>
-
-                        </div>
-
-
-
                         {/* 초기화 버튼 */}
                         <button
-                            className="btn btn-outline py-2 px-4 text-sm whitespace-nowrap flex-shrink-0"
+                            className="btn btn-outline py-2 px-4 text-sm whitespace-nowrap flex-shrink-0 ml-auto"
                             onClick={() => {
                                 setStatusFilter('all');
                                 setAgeFilter('all');
@@ -299,7 +295,6 @@ const UserManagement = () => {
                         </table>
                     )}
                 </div>
-
 
 
                 {/* 회원목록 페이지 넘기기 */}

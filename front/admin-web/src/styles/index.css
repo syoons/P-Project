@@ -130,6 +130,14 @@ button {
   padding: 2rem;
 }
 
+.mb-6 {
+  margin-bottom: 1.5rem;
+}
+
+.mr-1 {
+  margin-right: 0.25rem;
+}
+
 .rounded-lg {
   border-radius: 0.5rem;
 }
@@ -180,6 +188,10 @@ button {
 
 .text-danger {
   color: var(--danger);
+}
+
+.text-center {
+  text-align: center;
 }
 
 /* 컴포넌트 */

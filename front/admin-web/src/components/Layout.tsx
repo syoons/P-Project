@@ -28,7 +28,7 @@ const Layout = () => {
             <aside className="w-64 glass-panel flex flex-col h-full border-r border-border z-20">
                 <div className="p-6 flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center font-bold text-white shadow-md">
-                        A
+                        <BookOpen size={14} className="mr-1" />
                     </div>
                     <span className="font-bold text-xl tracking-tight text-primary">AdminPage</span>
                 </div>
