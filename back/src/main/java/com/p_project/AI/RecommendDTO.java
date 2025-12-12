@@ -10,5 +10,5 @@ import lombok.NoArgsConstructor;
 public class RecommendDTO {
     private String type;
     private String emotion;
-    private String recommendation;
+    private String recommend;
 }

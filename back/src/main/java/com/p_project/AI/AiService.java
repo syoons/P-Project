@@ -70,7 +70,7 @@ public class AiService {
         RecommendDTO recommend = res.getRecommend();
 
         if (recommend != null) {
-            recommendTitle = recommend.getRecommendation();
+            recommendTitle = recommend.getRecommend();
 
             // type 기반으로 genre 비슷한 개념 만들어줌
             // (음악 / 도서 구분용)

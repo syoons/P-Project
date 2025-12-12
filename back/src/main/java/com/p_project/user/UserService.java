@@ -108,8 +108,6 @@ public class UserService {
             String email = userDTO.getEmail();
             String password = userDTO.getPwd();
 
-            log.debug("[JWTFilter] Incoming Request → email: {}, password: {}", email, password);
-
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(email, password)
             );
