@@ -12,7 +12,7 @@ const UserManagement = () => {
 
     const [users, setUsers] = useState<User[]>([]);
     const [totalPages, setTotalPages] = useState(0);
-    const [totalElements, setTotalElements] = useState(0);
+    // const [totalElements, setTotalElements] = useState(0);
     const [loading, setLoading] = useState(false);
 
     // 통계 상태
@@ -101,7 +101,7 @@ const UserManagement = () => {
 
                 // 필터링된 결과로 페이지네이션 및 상태 업데이트
                 if (isFiltering) {
-                    setTotalElements(processedUsers.length);
+                    // setTotalElements(processedUsers.length);
                     setTotalPages(Math.ceil(processedUsers.length / itemsPerPage));
 
                     // 현재 페이지에 맞는 데이터 슬라이싱
@@ -112,7 +112,7 @@ const UserManagement = () => {
                     // 서버 사이드 페이지네이션 결과 그대로 사용
                     setUsers(response.content);
                     setTotalPages(response.totalPages);
-                    setTotalElements(response.totalElements);
+                    // setTotalElements(response.totalElements);
                 }
 
                 // 검색어가 없고 필터도 없을 때만 전체 통계 업데이트

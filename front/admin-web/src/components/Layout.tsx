@@ -1,6 +1,6 @@
-import React from 'react';
+
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { Users, BarChart2, BookOpen, LogOut, Bell, Search } from 'lucide-react';
+import { Users, BarChart2, BookOpen, LogOut, Bell } from 'lucide-react';
 
 import { removeToken } from '../utils/auth';
 
