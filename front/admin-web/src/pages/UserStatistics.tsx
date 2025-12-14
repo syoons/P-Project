@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from 'recharts';
 import { getUserStats } from '../api/statsApi';
 
-const COLORS = ['#8b5cf6', '#a78bfa', '#c4b5fd', '#ddd6fe', '#ede9fe', '#f5f3ff'];
+const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#6366F1', '#14B8A6'];
 
 const UserStatistics = () => {
     const [timeData, setTimeData] = useState<{ name: string; users: number }[]>([]);
@@ -52,7 +52,7 @@ const UserStatistics = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* 차트 1: 일일 활동 */}
                 <div className="card">
-                    <h3 className="font-bold text-lg mb-6">시간대별 활동 분포</h3>
+                    <h3 className="font-bold text-lg mb-6 text-center">시간대별 활동 분포</h3>
                     <div style={{ width: '100%', height: 300 }}>
                         <ResponsiveContainer>
                             <BarChart data={timeData}>
@@ -71,23 +71,28 @@ const UserStatistics = () => {
 
                 {/* 차트 2: 연령대별 분포 */}
                 <div className="card">
-                    <h3 className="font-bold text-lg mb-6">연령대별 회원 분포</h3>
+                    <h3 className="font-bold text-lg mb-6 text-center">연령대별 회원 분포</h3>
                     <div style={{ width: '100%', height: 300 }}>
                         <ResponsiveContainer>
-                            <BarChart data={ageData} layout="vertical">
-                                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
-                                <XAxis type="number" tick={{ fontSize: 12 }} />
-                                <YAxis dataKey="name" type="category" tick={{ fontSize: 12 }} width={40} />
-                                <Tooltip
-                                    contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #e2e8f0' }}
-                                    cursor={{ fill: '#f8fafc' }}
-                                />
-                                <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                            <PieChart>
+                                <Pie
+                                    data={ageData}
+                                    cx="50%"
+                                    cy="50%"
+                                    labelLine={false}
+                                    label={({ name, percent }: { name?: string | number; percent?: number }) => `${name ?? ''} ${(percent ? percent * 100 : 0).toFixed(0)}%`}
+                                    outerRadius={100}
+                                    fill="#8884d8"
+                                    dataKey="value"
+                                    nameKey="name"
+                                >
                                     {ageData.map((_, index) => (
                                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                     ))}
-                                </Bar>
-                            </BarChart>
+                                </Pie>
+                                <Tooltip />
+                                <Legend />
+                            </PieChart>
                         </ResponsiveContainer>
                     </div>
                 </div>

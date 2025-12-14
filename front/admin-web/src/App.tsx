@@ -6,11 +6,11 @@ import UserManagement from './pages/UserManagement';
 import UserStatistics from './pages/UserStatistics';
 import BookStatistics from './pages/BookStatistics';
 
+import { isAuthenticated } from './utils/auth';
+
 // Protected Route Wrapper
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
-
-  if (!isAuthenticated) {
+  if (!isAuthenticated()) {
     return <Navigate to="/login" replace />;
   }
 

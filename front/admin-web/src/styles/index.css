@@ -130,6 +130,14 @@ button {
   padding: 2rem;
 }
 
+.mb-6 {
+  margin-bottom: 1.5rem;
+}
+
+.mr-1 {
+  margin-right: 0.25rem;
+}
+
 .rounded-lg {
   border-radius: 0.5rem;
 }
@@ -180,6 +188,10 @@ button {
 
 .text-danger {
   color: var(--danger);
+}
+
+.text-center {
+  text-align: center;
 }
 
 /* 컴포넌트 */
@@ -272,6 +284,23 @@ button {
 }
 
 .input-field:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+/* Compact select for filters and search type */
+.select-compact {
+  padding: 0.5rem 0.7rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border);
+  background-color: white;
+  color: var(--text-main);
+  outline: none;
+  transition: all 0.2s;
+  font-size: 0.875rem;
+}
+
+.select-compact:focus {
   border-color: var(--primary);
   box-shadow: 0 0 0 3px var(--primary-light);
 }

@@ -1,6 +1,8 @@
-import React from 'react';
+
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { Users, BarChart2, BookOpen, LogOut, Bell, Search } from 'lucide-react';
+import { Users, BarChart2, BookOpen, LogOut, Bell } from 'lucide-react';
+
+import { removeToken } from '../utils/auth';
 
 const SidebarItem = ({ icon: Icon, label, to, active }: { icon: any, label: string, to: string, active: boolean }) => (
     <Link to={to} className={`sidebar-link ${active ? 'active' : ''}`}>
@@ -15,7 +17,7 @@ const Layout = () => {
 
     const handleLogout = () => {
         if (window.confirm('정말 로그아웃 하시겠습니까?')) {
-            localStorage.removeItem('isAuthenticated');
+            removeToken();
             navigate('/login');
         }
     };
@@ -26,9 +28,9 @@ const Layout = () => {
             <aside className="w-64 glass-panel flex flex-col h-full border-r border-border z-20">
                 <div className="p-6 flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center font-bold text-white shadow-md">
-                        R
+                        <BookOpen size={14} className="mr-1" />
                     </div>
-                    <span className="font-bold text-xl tracking-tight text-primary">ReadAdmin</span>
+                    <span className="font-bold text-xl tracking-tight text-primary">AdminPage</span>
                 </div>
 
                 <nav className="flex-1 px-4 py-6 flex flex-col gap-2">
