@@ -3,7 +3,7 @@ import axios from 'axios';
 import { getToken } from '../utils/auth';
 
 // 환경 변수에서 API 기본 URL을 가져옵니다. 설정되지 않은 경우 배포된 서버를 사용합니다.
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://ceprj.gachon.ac.kr:60013';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 const axiosInstance = axios.create({
     baseURL: BASE_URL,

@@ -1,0 +1,12 @@
+{
+    "rewrites": [
+        {
+            "source": "/api/:path*",
+            "destination": "http://ceprj.gachon.ac.kr:60013/api/:path*"
+        },
+        {
+            "source": "/admin/:path*",
+            "destination": "http://ceprj.gachon.ac.kr:60013/admin/:path*"
+        }
+    ]
+}
